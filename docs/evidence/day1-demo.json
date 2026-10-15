@@ -1,0 +1,429 @@
+{
+  "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+  "mode": "mock",
+  "status": "COMPLETED",
+  "stop_reason": "FINAL_ANSWER",
+  "step_count": 4,
+  "tool_call_count": 7,
+  "budget_tokens": 8701,
+  "token_accounting": "utf8_bytes_estimate",
+  "cost": null,
+  "output": "[Mock / synthetic data] A=19000, B=19600, C=21000 CNY. B fits 20000 CNY with 3-day delivery and 36-month warranty. Read-only comparison complete; no draft or order was created.",
+  "events": [
+    {
+      "event_id": 1,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 0,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.664461+00:00",
+      "type": "run.created",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 2,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 0,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.664461+00:00",
+      "type": "run.started",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 3,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 1,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 4,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 1,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 1,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 5,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 1,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "tool_name": "list_supplier_quotes"
+      }
+    },
+    {
+      "event_id": 6,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 1,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "tool_name": "list_supplier_quotes"
+      }
+    },
+    {
+      "event_id": 7,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 1,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 8,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 9,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 3,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 10,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 11,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 12,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 13,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-B",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 14,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-B",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 15,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-B",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 16,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-C",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 17,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-C",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 18,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 2,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.666632+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-C",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 19,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 20,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 3,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 21,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-A",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 22,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-A",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 23,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-A",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 24,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-B",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 25,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-B",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 26,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-B",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 27,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-C",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 28,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-C",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 29,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 3,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-C",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 30,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 4,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 31,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 4,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 0,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 32,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 4,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "run.completed",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 33,
+      "run_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "step_id": 4,
+      "correlation_id": "097c974d-ad94-47ef-9014-fd654d10dd9a",
+      "timestamp": "2026-10-14T10:25:50.667682+00:00",
+      "type": "run.finished",
+      "mode": "mock",
+      "payload": {
+        "duration_ms": 0.0
+      }
+    }
+  ]
+}

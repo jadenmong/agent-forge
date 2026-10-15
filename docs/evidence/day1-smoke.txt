@@ -1,0 +1,2 @@
+Mock demo: COMPLETED, 4 model turns, 7 tool calls
+Limit demo: FAILED / MAX_STEPS, exit 1
