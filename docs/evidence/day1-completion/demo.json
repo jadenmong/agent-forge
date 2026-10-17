@@ -1,0 +1,554 @@
+{
+  "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+  "agent_id": "procurement-demo",
+  "mode": "mock",
+  "status": "COMPLETED",
+  "stop_reason": "FINAL_ANSWER",
+  "step_count": 4,
+  "model_call_count": 4,
+  "tool_call_count": 7,
+  "budget_tokens": 8681,
+  "token_accounting": "utf8_bytes_estimate",
+  "cost": null,
+  "output": "[Mock / synthetic data] A=19000.00, B=19600.00, C=21000.00 CNY; budget=20000.00 CNY. Predefined comparison summary from fixtures; no draft or order was created.",
+  "steps": [
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 1,
+      "kind": "model",
+      "started_at": "2026-10-17T08:12:45.332526+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": null,
+      "call_id": null
+    },
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 2,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:45.332526+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": "list_supplier_quotes",
+      "call_id": "quotes"
+    },
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 3,
+      "kind": "model",
+      "started_at": "2026-10-17T08:12:45.332526+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": null,
+      "call_id": null
+    },
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 4,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:45.332526+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": "get_supplier_detail",
+      "call_id": "detail-A"
+    },
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 5,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:45.332526+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": "get_supplier_detail",
+      "call_id": "detail-B"
+    },
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 6,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:45.333558+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": "get_supplier_detail",
+      "call_id": "detail-C"
+    },
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 7,
+      "kind": "model",
+      "started_at": "2026-10-17T08:12:45.333558+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": null,
+      "call_id": null
+    },
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 8,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:45.333558+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": "calculate_total_cost",
+      "call_id": "total-A"
+    },
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 9,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:45.333558+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": "calculate_total_cost",
+      "call_id": "total-B"
+    },
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 10,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:45.333558+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": "calculate_total_cost",
+      "call_id": "total-C"
+    },
+    {
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "seq": 11,
+      "kind": "model",
+      "started_at": "2026-10-17T08:12:45.333558+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": null,
+      "call_id": null
+    }
+  ],
+  "events": [
+    {
+      "event_id": 1,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 0,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.329973+00:00",
+      "type": "run.created",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 2,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 0,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.329973+00:00",
+      "type": "run.started",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 3,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 1,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 4,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 1,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 1,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 5,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 2,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "tool_name": "list_supplier_quotes"
+      }
+    },
+    {
+      "event_id": 6,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 2,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "tool_name": "list_supplier_quotes"
+      }
+    },
+    {
+      "event_id": 7,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 2,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 8,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 3,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 9,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 3,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 3,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 10,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 4,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 11,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 4,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 12,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 4,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 13,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 5,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-B",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 14,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 5,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.332526+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-B",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 15,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 5,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-B",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 16,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 6,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-C",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 17,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 6,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-C",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 18,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 6,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-C",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 19,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 7,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 20,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 7,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 3,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 21,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 8,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-A",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 22,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 8,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-A",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 23,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 8,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-A",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 24,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 9,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-B",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 25,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 9,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-B",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 26,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 9,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-B",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 27,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 10,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-C",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 28,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 10,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-C",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 29,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 10,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-C",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 30,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 11,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 31,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 11,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 0,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 32,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 11,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "run.completed",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 33,
+      "run_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "step_id": 11,
+      "correlation_id": "6d5df5fe-ae25-4db9-9672-de4cbfaf1d57",
+      "timestamp": "2026-10-17T08:12:45.333558+00:00",
+      "type": "run.finished",
+      "mode": "mock",
+      "payload": {
+        "duration_ms": 0.0
+      }
+    }
+  ]
+}

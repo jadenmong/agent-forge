@@ -10,7 +10,7 @@ requires-python = ">=3.12"
 dependencies = ["pydantic==2.11.7"]
 
 [project.optional-dependencies]
-test = ["pytest==8.4.1"]
+test = ["pytest==8.4.1", "ruff==0.11.13"]
 
 [project.scripts]
 agentforge-demo = "agentforge.demo:main"
@@ -21,3 +21,9 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

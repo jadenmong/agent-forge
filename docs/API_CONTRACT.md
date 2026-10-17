@@ -1,5 +1,8 @@
 # REST/JSON API 契约状态
 
+> 2026-10-16 Day 1 补齐：未新增或变更任何 HTTP/OpenAPI 端点。下表仍是计划，尚无可执行 curl 创建/查询接口。
+> 内部 Python 调用改为 `RuntimeEngine.run(adapter, task, config=AgentConfig(...), state=...)`；CLI 是开发测试入口，平台用户不被要求使用 Python。
+
 2026-10-14：**没有 HTTP 服务、没有新增或变更的 OpenAPI 端点**。
 当前 CLI 不是公开 REST API；无法用 curl 创建 Run，不提供会误导为可执行的伪地址。
 

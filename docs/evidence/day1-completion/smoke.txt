@@ -1,0 +1,9 @@
+demo: COMPLETED / FINAL_ANSWER, model_calls=4, tool_calls=7, exit=0
+direct: COMPLETED / FINAL_ANSWER, model_calls=1, tool_calls=0, exit=0
+single-tool: COMPLETED / FINAL_ANSWER, model_calls=2, tool_calls=1, exit=0
+two-tools: COMPLETED / FINAL_ANSWER, model_calls=3, tool_calls=2, exit=0
+unknown-tool: FAILED / UNKNOWN_TOOL, model_calls=1, tool_calls=0, exit=1
+tool-error: FAILED / TOOL_ERROR, model_calls=1, tool_calls=1, exit=1
+repeat-steps: FAILED / MAX_STEPS, model_calls=2, tool_calls=2, exit=1
+repeat-model: FAILED / MAX_MODEL_CALLS, model_calls=2, tool_calls=2, exit=1
+limit: FAILED / MAX_STEPS, model_calls=1, tool_calls=1, exit=1

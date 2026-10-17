@@ -10,7 +10,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from .models import StrictModel, ToolCall
+from .models import StrictModel, ToolCall, ToolResult
 
 
 class RuntimeFault(Exception):
@@ -26,7 +26,7 @@ class Permission(StrEnum):
 
 
 @dataclass(frozen=True)
-class Tool:
+class ToolDefinition:
     name: str
     description: str
     arguments_type: type[StrictModel]
@@ -35,8 +35,11 @@ class Tool:
     timeout_seconds: float = 2.0
 
     def __post_init__(self):
-        if (not self.name or not math.isfinite(self.timeout_seconds)
-                or not 0 < self.timeout_seconds <= 300):
+        if (
+            not self.name
+            or not math.isfinite(self.timeout_seconds)
+            or not 0 < self.timeout_seconds <= 300
+        ):
             raise ValueError("Invalid tool name or timeout")
         if not isinstance(self.permission, Permission):
             raise ValueError("Permission must be explicitly classified")
@@ -45,15 +48,18 @@ class Tool:
 
 
 class ToolRegistry:
-    def __init__(self, tools: tuple[Tool, ...]):
+    def __init__(self, tools: tuple[ToolDefinition, ...]):
         self._tools = {tool.name: tool for tool in tools}
         if len(self._tools) != len(tools):
             raise ValueError("Duplicate tool name")
 
     def schemas(self, allowed: frozenset[str]) -> list[dict[str, Any]]:
         return [
-            {"name": tool.name, "description": tool.description,
-             "parameters": tool.arguments_type.model_json_schema()}
+            {
+                "name": tool.name,
+                "description": tool.description,
+                "parameters": tool.arguments_type.model_json_schema(),
+            }
             for tool in self._tools.values()
             if tool.name in allowed and tool.permission == Permission.READ_ONLY
         ]
@@ -73,7 +79,7 @@ class ToolRegistry:
             raise RuntimeFault("INVALID_TOOL_ARGUMENTS") from None
         return tool, arguments
 
-    async def dispatch(self, call: ToolCall, allowed: frozenset[str]):
+    async def dispatch(self, call: ToolCall, allowed: frozenset[str]) -> ToolResult:
         tool, arguments = self.validate(call, allowed)
         try:
             async with asyncio.timeout(tool.timeout_seconds):
@@ -82,7 +88,7 @@ class ToolRegistry:
             encoded = json.dumps(result, ensure_ascii=False, allow_nan=False)
             if len(encoded.encode("utf-8")) > 32000:
                 raise RuntimeFault("TOOL_OUTPUT_TOO_LARGE")
-            return json.loads(encoded)
+            return ToolResult(call_id=call.call_id, result=json.loads(encoded))
         except TimeoutError:
             raise RuntimeFault("TOOL_TIMEOUT") from None
         except RuntimeFault:

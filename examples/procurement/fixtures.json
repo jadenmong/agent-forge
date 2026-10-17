@@ -1,0 +1,9 @@
+{
+  "quantity": 20,
+  "budget_cents": 2000000,
+  "suppliers": [
+    {"supplier": "A", "unit_price_cents": 95000, "delivery_days": 7, "warranty_months": 24},
+    {"supplier": "B", "unit_price_cents": 98000, "delivery_days": 3, "warranty_months": 36},
+    {"supplier": "C", "unit_price_cents": 105000, "delivery_days": 2, "warranty_months": 36}
+  ]
+}

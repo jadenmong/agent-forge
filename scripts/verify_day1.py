@@ -1,43 +1,98 @@
 """Run actual day-one checks and save their unedited stdout as evidence."""
 
 import json
-from pathlib import Path
+import os
 import subprocess
 import sys
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-EVIDENCE = ROOT / "docs" / "evidence"
+EVIDENCE = ROOT / "docs" / "evidence" / "day1-completion"
+ENVIRONMENT = {
+    key: value
+    for key, value in os.environ.items()
+    if not key.upper().endswith("API_KEY")
+}
 
 
 def capture(filename, arguments, expected_code=0):
     result = subprocess.run(
-        [sys.executable, *arguments], cwd=ROOT, capture_output=True,
-        text=True, encoding="utf-8", env=None,
+        [sys.executable, *arguments],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=ENVIRONMENT,
+        timeout=60,
     )
     (EVIDENCE / filename).write_text(result.stdout, encoding="utf-8")
     if result.returncode != expected_code:
         print(result.stdout)
         print(result.stderr, file=sys.stderr)
-        raise SystemExit(f"{arguments}: expected {expected_code}, got {result.returncode}")
+        raise SystemExit(
+            f"{arguments}: expected {expected_code}, got {result.returncode}"
+        )
     return result.stdout
 
 
 def main():
-    EVIDENCE.mkdir(exist_ok=True)
-    tests = capture("day1-pytest.txt", ["-m", "pytest", "-q", "-ra"])
+    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    print(
+        capture("ruff-check.txt", ["-m", "ruff", "check", "src", "tests", "scripts"]),
+        end="",
+    )
+    print(
+        capture(
+            "ruff-format.txt",
+            ["-m", "ruff", "format", "--check", "src", "tests", "scripts"],
+        ),
+        end="",
+    )
+    tests = capture("pytest.txt", ["-m", "pytest", "-q"])
     print(tests, end="")
-    demo = json.loads(capture("day1-demo.json", ["-m", "agentforge.demo"]))
-    limited = json.loads(capture(
-        "day1-limit.json", ["-m", "agentforge.demo", "--max-steps", "1"], expected_code=1))
-    assert demo["status"] == "COMPLETED" and demo["mode"] == "mock"
-    assert (demo["step_count"], demo["tool_call_count"]) == (4, 7)
-    assert demo["cost"] is None
-    assert limited["status"] == "FAILED" and limited["stop_reason"] == "MAX_STEPS"
-    summary = "Mock demo: COMPLETED, 4 model turns, 7 tool calls\nLimit demo: FAILED / MAX_STEPS, exit 1\n"
-    (EVIDENCE / "day1-smoke.txt").write_text(summary, encoding="utf-8")
+    scenarios = [
+        ("demo", [], "FINAL_ANSWER", 4, 7),
+        ("direct", ["--scenario", "direct"], "FINAL_ANSWER", 1, 0),
+        ("single-tool", ["--scenario", "single-tool"], "FINAL_ANSWER", 2, 1),
+        ("two-tools", ["--scenario", "two-tools"], "FINAL_ANSWER", 3, 2),
+        ("unknown-tool", ["--scenario", "unknown-tool"], "UNKNOWN_TOOL", 1, 0),
+        ("tool-error", ["--scenario", "tool-error"], "TOOL_ERROR", 1, 1),
+        (
+            "repeat-steps",
+            ["--scenario", "repeat", "--max-steps", "2"],
+            "MAX_STEPS",
+            2,
+            2,
+        ),
+        (
+            "repeat-model",
+            ["--scenario", "repeat", "--max-model-calls", "2"],
+            "MAX_MODEL_CALLS",
+            2,
+            2,
+        ),
+        ("limit", ["--max-steps", "1"], "MAX_STEPS", 1, 1),
+    ]
+    lines = []
+    for name, flags, reason, models, tools in scenarios:
+        code = 0 if reason == "FINAL_ANSWER" else 1
+        run = json.loads(
+            capture(
+                f"{name}.json", ["-m", "agentforge.demo", *flags], expected_code=code
+            )
+        )
+        assert run["mode"] == "mock" and run["cost"] is None
+        assert run["status"] == ("COMPLETED" if code == 0 else "FAILED")
+        assert run["stop_reason"] == reason
+        assert (run["model_call_count"], run["tool_call_count"]) == (models, tools)
+        assert all(step["status"] != "RUNNING" for step in run["steps"])
+        lines.append(
+            f"{name}: {run['status']} / {reason}, model_calls={models}, tool_calls={tools}, exit={code}"
+        )
+    summary = "\n".join(lines) + "\n"
+    (EVIDENCE / "smoke.txt").write_text(summary, encoding="utf-8")
     print(summary, end="")
-    capture("day1-environment.txt", ["-m", "pip", "freeze"])
+    capture("environment.txt", ["-m", "pip", "freeze"])
 
 
 if __name__ == "__main__":

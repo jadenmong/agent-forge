@@ -1,5 +1,29 @@
 # 故障与边界证据
 
+## 2026-10-16 Day 1 补齐：先失败、后修复
+
+新增两个回归测试，修改源码前实际结果为 `2 failed in 0.31s`，原始输出见 `evidence/day1-completion/before-pytest.txt`：
+
+- `test_model_call_limit_stops_repeated_requests`：Limits 不接受 max_model_calls，验证缺少独立上限。
+- `test_required_fixture_exists`：要求的 fixture 文件不存在。
+
+补齐后新增覆盖：
+
+| 故障/边界 | 断言测试 |
+|---|---|
+| 持续请求同一工具，但使用新 call ID | test_endless_mock_is_terminated_at_each_limit：分别触发步数/模型调用/工具次数上限，状态 FAILED、原因准确 |
+| 恰好用尽模型调用额度并返回最终答案 | test_model_call_limit_allows_final_response_at_boundary：正常完成 |
+| 串行两工具后回到模型 | test_serial_tools_return_results_before_next_model_call：结果关联与数据依赖正确 |
+| fixture 不是实际数据源 | test_tools_load_actual_fixture_values：修改价格与交期，返回值和总价随之变化 |
+| fixture JSON 损坏/负数/供应商重复 | test_invalid_fixture_is_rejected：严格校验拒绝 |
+| 模型调用失败 | test_failed_model_attempt_is_counted_and_step_finalized：计入尝试次数，步骤 FAILED |
+| 取消后缺少可检查状态 | test_cancellation_preserves_observable_state_and_steps：CANCELLED、步骤收尾、事件完整并传播取消 |
+| 复用已完成 RunState | test_runtime_cannot_reuse_completed_state：拒绝且不增加事件 |
+
+本次原始结果在 `evidence/day1-completion/pytest.txt`，CLI 故障轨迹在同目录 `unknown-tool.json`、`tool-error.json`、`repeat-steps.json`、`repeat-model.json`。
+
+## 2026-10-14 原始故障记录
+
 来源：手工构造的离线故障注入，测试在 `tests/test_runtime.py`。
 
 | 故障 | 当前处置 | 测试 |

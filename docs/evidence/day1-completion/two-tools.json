@@ -1,0 +1,268 @@
+{
+  "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+  "agent_id": "procurement-demo",
+  "mode": "mock",
+  "status": "COMPLETED",
+  "stop_reason": "FINAL_ANSWER",
+  "step_count": 3,
+  "model_call_count": 3,
+  "tool_call_count": 2,
+  "budget_tokens": 4588,
+  "token_accounting": "utf8_bytes_estimate",
+  "cost": null,
+  "output": "[Mock] Script complete; no draft or order was created.",
+  "steps": [
+    {
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "seq": 1,
+      "kind": "model",
+      "started_at": "2026-10-17T08:12:46.549696+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": null,
+      "call_id": null
+    },
+    {
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "seq": 2,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:46.549696+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": "list_supplier_quotes",
+      "call_id": "quotes"
+    },
+    {
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "seq": 3,
+      "kind": "model",
+      "started_at": "2026-10-17T08:12:46.549696+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": null,
+      "call_id": null
+    },
+    {
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "seq": 4,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:46.549696+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": "get_supplier_detail",
+      "call_id": "detail-A"
+    },
+    {
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "seq": 5,
+      "kind": "model",
+      "started_at": "2026-10-17T08:12:46.550693+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": null,
+      "call_id": null
+    }
+  ],
+  "events": [
+    {
+      "event_id": 1,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 0,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.544974+00:00",
+      "type": "run.created",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 2,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 0,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.544974+00:00",
+      "type": "run.started",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 3,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 1,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.549696+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 4,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 1,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.549696+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 1,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 5,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 2,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.549696+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "tool_name": "list_supplier_quotes"
+      }
+    },
+    {
+      "event_id": 6,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 2,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.549696+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "tool_name": "list_supplier_quotes"
+      }
+    },
+    {
+      "event_id": 7,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 2,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.549696+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 8,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 3,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.549696+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 9,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 3,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.549696+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 1,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 10,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 4,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.550693+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 11,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 4,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.550693+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 12,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 4,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.550693+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 13,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 5,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.550693+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 14,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 5,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.550693+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 0,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 15,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 5,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.550693+00:00",
+      "type": "run.completed",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 16,
+      "run_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "step_id": 5,
+      "correlation_id": "e4e230b7-a1c0-49b1-9adc-399720d78451",
+      "timestamp": "2026-10-17T08:12:46.550693+00:00",
+      "type": "run.finished",
+      "mode": "mock",
+      "payload": {
+        "duration_ms": 14.999999955762178
+      }
+    }
+  ]
+}

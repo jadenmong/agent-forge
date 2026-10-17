@@ -1,5 +1,7 @@
 # 架构：2026-10-14 已实现范围
 
+> 2026-10-16 补齐 Day 1 类型、fixture、模型调用上限与步骤记录，仍为内存 Mock Runtime。
+
 ```mermaid
 flowchart TD
   CLI[合成数据 CLI Demo] --> Engine[RuntimeEngine 自研顺序循环]
@@ -17,3 +19,11 @@ flowchart TD
 后续 Responses 适配器须单独维护合法的 reasoning items/function_call/call_id/续传语义。
 
 计划的 API、React、MCP、SQLite、审批和评测边界见 `IMPLEMENTATION_PLAN.md`，不属于上图已实现部分。
+
+## Day 1 补齐后的类型与数据流
+
+`models.py`：AgentConfig/Limits、ModelAdapter、ToolCall、ToolResult、RunStep、RunEvent。
+`tools.py`：ToolDefinition、ToolRegistry；`runtime.py`：RunState 和状态迁移。
+`demo.py` 从固定 `examples/procurement/fixtures.json` 加载严格校验的模拟数据。
+每次实际模型/工具操作产生 RunStep；事件引用步骤顺序号；ToolResult 仅在上下文中传递，事件不收集原始参数和结果。
+步骤和事件仍仅在内存；有类型的数据结构不等于已实现存储或恢复。具体取舍见 `DECISIONS.md` D007。

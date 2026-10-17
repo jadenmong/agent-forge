@@ -1,0 +1,148 @@
+{
+  "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+  "agent_id": "procurement-demo",
+  "mode": "mock",
+  "status": "FAILED",
+  "stop_reason": "TOOL_ERROR",
+  "step_count": 1,
+  "model_call_count": 1,
+  "tool_call_count": 1,
+  "budget_tokens": 1203,
+  "token_accounting": "utf8_bytes_estimate",
+  "cost": null,
+  "output": null,
+  "steps": [
+    {
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "seq": 1,
+      "kind": "model",
+      "started_at": "2026-10-17T08:12:47.332884+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": null,
+      "call_id": null
+    },
+    {
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "seq": 2,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:47.333881+00:00",
+      "status": "FAILED",
+      "duration_ms": 0.0,
+      "error_code": "TOOL_ERROR",
+      "tool_name": "get_supplier_detail",
+      "call_id": "detail-A"
+    }
+  ],
+  "events": [
+    {
+      "event_id": 1,
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "step_id": 0,
+      "correlation_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "timestamp": "2026-10-17T08:12:47.330424+00:00",
+      "type": "run.created",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 2,
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "step_id": 0,
+      "correlation_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "timestamp": "2026-10-17T08:12:47.330424+00:00",
+      "type": "run.started",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 3,
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "step_id": 1,
+      "correlation_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "timestamp": "2026-10-17T08:12:47.332884+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 4,
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "step_id": 1,
+      "correlation_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "timestamp": "2026-10-17T08:12:47.333881+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 1,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 5,
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "step_id": 2,
+      "correlation_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "timestamp": "2026-10-17T08:12:47.333881+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 6,
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "step_id": 2,
+      "correlation_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "timestamp": "2026-10-17T08:12:47.333881+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 7,
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "step_id": 2,
+      "correlation_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "timestamp": "2026-10-17T08:12:47.333881+00:00",
+      "type": "tool.failed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "code": "TOOL_ERROR"
+      }
+    },
+    {
+      "event_id": 8,
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "step_id": 2,
+      "correlation_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "timestamp": "2026-10-17T08:12:47.333881+00:00",
+      "type": "run.failed",
+      "mode": "mock",
+      "payload": {
+        "code": "TOOL_ERROR"
+      }
+    },
+    {
+      "event_id": 9,
+      "run_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "step_id": 2,
+      "correlation_id": "84d682b7-8eef-42c8-9c0f-ca184a41a97b",
+      "timestamp": "2026-10-17T08:12:47.333881+00:00",
+      "type": "run.finished",
+      "mode": "mock",
+      "payload": {
+        "duration_ms": 0.0
+      }
+    }
+  ]
+}

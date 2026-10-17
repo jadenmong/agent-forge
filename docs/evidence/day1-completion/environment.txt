@@ -1,0 +1,13 @@
+-e git+https://github.com/jadenmong/agent-forge.git@6c5bccf2ab6ee6b057ceb7b68e1abf5b2d888b3e#egg=agentforge
+annotated-types==0.8.0
+colorama==0.4.6
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.6.0
+pydantic==2.11.7
+pydantic_core==2.33.2
+Pygments==2.21.0
+pytest==8.4.1
+ruff==0.11.13
+typing-inspection==0.4.4
+typing_extensions==4.16.0

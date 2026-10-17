@@ -41,3 +41,21 @@ wall time 包含模型和工具；模型/工具超时、次数/token 上限记�
 10/15 先读取官方来源、确认实际可获得的 SDK/协议/API、锁定确切版本，再编写真实 client/server 测试。
 若官方实际版本与 PRD 的 MCP 2026-07-28 / SDK 2.x 不符，记录官方证据与阻塞，不静默退回 FastMCP v1。
 当前仅锁定直接依赖 Pydantic 2.11.7、pytest 8.4.1；尚非含全部传递依赖的锁文件。
+
+## D007 — 2026-10-16：补齐 Day 1 详细清单
+
+原首日里程碑概括不能代替详细任务验收。新增 `AgentConfig`、`ToolResult`、`RunStep`、`RunEvent`；将原 `Tool` 和 `Run` 分别改名为 `ToolDefinition`、`RunState`，实际接入执行链路。
+配置和协议边界使用严格 Pydantic 模型；可变运行状态/步骤使用 dataclass；内部事件用 TypedDict 保持现有 JSON 结构。TypedDict 提供类型声明，不进行运行时校验；事件仅由可信源码构造，不接收外部事件写入。
+没有为旧的内部 Python 名称添加别名或并存配置接口；检查并修改了仓库内全部调用方。CLI 命令保持可运行，尚无公开 REST 契约变更。
+
+`RuntimeEngine.run` 统一接收 `config=AgentConfig(...)`，避免工具权限/提示词/limits 分散传参。当前仅允许 mock 配置，不接受虚假 Live 模式。
+`max_steps` 限制决策轮次；`max_model_calls` 单独配置并限制模型调用尝试数，包含异常/超时尝试。当前每轮恰有一次调用且没有重试，所以计数相同；同时触及时优先记录 MAX_STEPS，不虚构不同计数。
+`RunStep.seq` 是全部 model/tool 操作的顺序号，与决策轮次 `step_count` 不同；事件 step_id 引用操作顺序号，创建 Run 时为 0。
+成功、失败、超时和取消都会结束当前步骤，记录耗时与安全原因码。取消仍传播 CancelledError；可传入 RunState 观察终态，无后台任务管理或恢复能力。
+
+采购事实迁至 `examples/procurement/fixtures.json`，固定源码路径加载并校验；不允许模型指定文件。保持源码 checkout + editable 安装，不提前增加 wheel 资源复制机制。
+命名 Mock 场景定义在 demo_adapter；适配器支持 repeat_last，用新 call ID 重复行为，验证上限而非重复 ID 拒绝。tool-error 只在显式演示参数下给本地工具注入异常，不伪造官方 SDK 返回。
+
+新增开发依赖 Ruff 0.11.13，统一承担格式化和基础静态检查，避免同时配置多个格式工具；不是生产依赖，也不要求追随最新版。
+配置与 check 模式参考 [Ruff 官方配置](https://docs.astral.sh/ruff/configuration/)及[格式化文档](https://docs.astral.sh/ruff/formatter/)，实际使用锁定版本运行验证。
+新证据写入 `evidence/day1-completion/`，历史交付和旧证据保留。完整平台 P0 仍需后续模块验收。

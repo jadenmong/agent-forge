@@ -1,0 +1,148 @@
+{
+  "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+  "agent_id": "procurement-demo",
+  "mode": "mock",
+  "status": "FAILED",
+  "stop_reason": "MAX_STEPS",
+  "step_count": 1,
+  "model_call_count": 1,
+  "tool_call_count": 1,
+  "budget_tokens": 1187,
+  "token_accounting": "utf8_bytes_estimate",
+  "cost": null,
+  "output": null,
+  "steps": [
+    {
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "seq": 1,
+      "kind": "model",
+      "started_at": "2026-10-17T08:12:48.498555+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": null,
+      "call_id": null
+    },
+    {
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "seq": 2,
+      "kind": "tool",
+      "started_at": "2026-10-17T08:12:48.498555+00:00",
+      "status": "COMPLETED",
+      "duration_ms": 0.0,
+      "error_code": null,
+      "tool_name": "list_supplier_quotes",
+      "call_id": "quotes"
+    }
+  ],
+  "events": [
+    {
+      "event_id": 1,
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "step_id": 0,
+      "correlation_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "timestamp": "2026-10-17T08:12:48.496016+00:00",
+      "type": "run.created",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 2,
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "step_id": 0,
+      "correlation_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "timestamp": "2026-10-17T08:12:48.496016+00:00",
+      "type": "run.started",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 3,
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "step_id": 1,
+      "correlation_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "timestamp": "2026-10-17T08:12:48.498555+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 4,
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "step_id": 1,
+      "correlation_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "timestamp": "2026-10-17T08:12:48.498555+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 1,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 5,
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "step_id": 2,
+      "correlation_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "timestamp": "2026-10-17T08:12:48.498555+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "tool_name": "list_supplier_quotes"
+      }
+    },
+    {
+      "event_id": 6,
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "step_id": 2,
+      "correlation_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "timestamp": "2026-10-17T08:12:48.498555+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "tool_name": "list_supplier_quotes"
+      }
+    },
+    {
+      "event_id": 7,
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "step_id": 2,
+      "correlation_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "timestamp": "2026-10-17T08:12:48.498555+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "duration_ms": 0.0
+      }
+    },
+    {
+      "event_id": 8,
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "step_id": 2,
+      "correlation_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "timestamp": "2026-10-17T08:12:48.498555+00:00",
+      "type": "run.failed",
+      "mode": "mock",
+      "payload": {
+        "code": "MAX_STEPS"
+      }
+    },
+    {
+      "event_id": 9,
+      "run_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "step_id": 2,
+      "correlation_id": "44df2c7f-2a3c-4640-a8a4-fcdcd02105f4",
+      "timestamp": "2026-10-17T08:12:48.498555+00:00",
+      "type": "run.finished",
+      "mode": "mock",
+      "payload": {
+        "duration_ms": 0.0
+      }
+    }
+  ]
+}
