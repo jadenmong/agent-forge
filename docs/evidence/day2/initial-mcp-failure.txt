@@ -1,0 +1,32 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+___________________ test_stdio_discovery_and_real_tool_call ___________________
+tests\test_mcp_adapter.py:42: in test_stdio_discovery_and_real_tool_call
+    asyncio.run(check())
+D:\Python3.12.3\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+D:\Python3.12.3\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+D:\Python3.12.3\Lib\asyncio\base_events.py:687: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests\test_mcp_adapter.py:31: in check
+    result = await registry.dispatch(
+src\agentforge\tools.py:123: in dispatch
+    result = await tool.handler(arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\agentforge\mcp_adapter.py:82: in handler
+    return await self.call(name, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\agentforge\mcp_adapter.py:57: in call
+    async with self.connect() as client:
+D:\Python3.12.3\Lib\contextlib.py:231: in __aexit__
+    await self.gen.athrow(value)
+src\agentforge\mcp_adapter.py:52: in connect
+    raise RuntimeFault("MCP_UNAVAILABLE") from None
+E   agentforge.tools.RuntimeFault: MCP_UNAVAILABLE
+=========================== short test summary info ===========================
+FAILED tests/test_mcp_adapter.py::test_stdio_discovery_and_real_tool_call - a...
+1 failed in 4.71s

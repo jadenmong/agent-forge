@@ -1,5 +1,32 @@
 # 故障与边界证据
 
+## Day 2（2026-10-17）真实发现与回归
+
+| 故障 | 发现/修复 | 证据 |
+|---|---|---|
+| MCP SDK 最低 Pydantic 版本冲突 | mcp 2.3.0 要求 ≥2.12；升级 2.11.7→2.14.1、刷新 editable 元数据，pip check 无冲突，70 项回归通过 | DECISIONS D008；day2/environment.txt、day1-regression.txt |
+| stdio 普通 dict 仅返回文本 | 实际 Client 返回 structured_content=null。改成显式输出模型，真正产生可校验结构化结果 | day2/initial-mcp-failure.txt；test_stdio_discovery_and_real_tool_call |
+| 异步上下文异常组吞掉应用原因 | 生命周期异常组曾把 MCP_INVALID_RESULT 变成 MCP_UNAVAILABLE；业务结果校验移出资源块，已知安全原因从异常组解包 | mcp_adapter.connect/call；test_mcp_tool_error_preserves_safe_error_code |
+| Windows GBK 输出 Vite Unicode 符号失败 | 统一脚本首次打印构建结果出现 UnicodeEncodeError；为终端输出设置 backslashreplace，原始文件仍保留 UTF-8 stdout | verify_day2.py；day2/web-build.txt |
+| TypeScript CSS 导入声明缺失 | 初次 build 出现 TS2882；补 vite/client 类型声明后构建通过 | apps/web/src/vite-env.d.ts；day2/web-build.txt |
+
+外部错误均为安全原因码，无无限重试：
+
+- `test_provider_errors_are_sanitized_and_not_retried`：401/403/429/400/500，断言只发一次请求，原文不进事件。
+- `test_model_termination_and_invalid_continuation_do_not_execute_tools`：未完成/空响应/拒绝/无效 JSON/缺少续传状态，工具执行数为零。
+- `test_incomplete_function_call_is_not_dispatched`：未完成函数请求不分派。
+- `test_mcp_registry_rejects_malicious_arguments_before_dispatch`：穿越样式字符串、错误类型、缺参、额外 command 字段均拒绝。
+- `test_real_server_rejects_invalid_supplier_without_registry`：直接调用真实 SDK Server 也拒绝非法 supplier。
+- `test_slow_mcp_tool_becomes_structured_failure_without_retry`：真实 SDK 客户端/服务端超时，tool.failed 含 MCP_TIMEOUT，调用一次。
+- `test_stdio_server_disconnect_is_explicit`：实际测试子进程在调用时退出，得到 MCP_UNAVAILABLE。
+- `test_api_missing_live_configuration_is_readable`、`test_empty_live_environment_does_not_break_agent_creation`：无 Key/模型不产生假成功或空指针。
+- `test_create_agent_and_enforce_its_allowlist`：API 创建无权限 Agent，Run 失败且工具执行数为零。
+
+OpenAI 测试为明确标记的合成 HTTP fixture，经官方 SDK 解析，不是外部 API 成功记录；MCP 测试使用真实 SDK 对端，未替换 SDK 返回值。
+本次仍未覆盖审批、重启恢复、幂等写入或 Evals；这些功能尚未实现。协议兼容范围限于固定本机服务的工具子集。
+
+## 以下为 Day 1 历史记录
+
 ## 2026-10-16 Day 1 补齐：先失败、后修复
 
 新增两个回归测试，修改源码前实际结果为 `2 failed in 0.31s`，原始输出见 `evidence/day1-completion/before-pytest.txt`：

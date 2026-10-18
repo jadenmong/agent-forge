@@ -1,0 +1,6 @@
+{
+  "agent_id": "procurement-demo",
+  "mode": "mock",
+  "input": "Compare synthetic supplier quotations. Read-only demo.",
+  "mock_scenario": "two-tools"
+}

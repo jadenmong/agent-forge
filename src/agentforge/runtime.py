@@ -26,7 +26,7 @@ class Status(StrEnum):
 class RunState:
     run_id: str = field(default_factory=lambda: str(uuid4()))
     agent_id: str = "procurement-demo"
-    mode: Literal["mock"] = "mock"
+    mode: Literal["mock", "live"] = "mock"
     status: Status = Status.CREATED
     stop_reason: str | None = None
     step_count: int = 0
@@ -89,6 +89,7 @@ class RuntimeEngine:
         if run.status != Status.CREATED:
             raise RuntimeFault("INVALID_STATE_TRANSITION")
         run.agent_id = config.id
+        run.mode = "live" if config.model_adapter == "openai" else "mock"
         run.emit("run.created")
         run.transition(Status.RUNNING)
         run.emit("run.started")

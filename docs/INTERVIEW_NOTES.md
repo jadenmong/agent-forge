@@ -1,5 +1,17 @@
 # 首日面试问答（2026-10-14）
 
+## Day 2 五个追问（2026-10-17，当前状态）
+
+1. **为什么 Responses 不能把所有对象拍平成 role/content？** function_call、reasoning、function_call_output 是不同协议项，call_id 关联调用结果。适配器按顺序重放它们，只保留加密 reasoning 状态，不保存隐藏原文；store=false 与账户 ZDR 语义分开说明。
+2. **如何证明 MCP 实际兼容，而非只 import 成功？** 固定官方 SDK 2.3.0，stdio 子进程完成 server/discover、tools/list、tools/call，检查实际 protocol_version=2026-07-28 和返回数据。真实断连/超时/异常参数也有测试，证据在 evidence/day2。
+3. **工具 annotations 说只读，能直接信任吗？** 不能据此授权。固定 server 和工具名称，发现后纳入同一 Registry，代码检查 allowlist、JSON Schema、权限、超时与结果。模型和工具内容均不能修改权限。
+4. **后台 Run 在服务退出时会怎样？** 当前仅为 asyncio 进程任务，强引用防止丢失；正常关闭取消，重启后历史和续传上下文清空。没有租约、消息队列、SQLite 或安全断点恢复，不宣称分布式可靠性。
+5. **如何证明其他语言可用，哪些成绩还不能讲？** 实际 curl 创建/查询 Run，React 调同一 API 并显示真实两工具步骤；这是 HTTP 接入互操作，不是多语言 Runtime。107 项测试是控制/协议回归，Live 无 Key 未测，不能当成真实模型任务质量。
+
+关键入口：openai_adapter.py、mcp_server.py、mcp_adapter.py、api.py、apps/web/src/main.tsx；证据见 RESULTS 和 FEATURE_MATRIX。
+
+## Day 1 历史问答
+
 > 2026-10-16 已按详细 Day 1 清单补充。最新执行证据见 `evidence/day1-completion/`；原首日记录见 `RESULTS.md`。
 
 ## 1. 你的“自研 Harness”具体在哪里？

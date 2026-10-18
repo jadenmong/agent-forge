@@ -7,10 +7,18 @@ name = "agentforge"
 version = "0.1.0.dev1"
 description = "Local single-user Agent Harness, day-one mock runtime"
 requires-python = ">=3.12"
-dependencies = ["pydantic==2.11.7"]
+dependencies = [
+    "pydantic==2.14.1",
+    "mcp==2.3.0",
+    "openai==3.33.0",
+    "fastapi==0.143.3",
+    "uvicorn==0.54.0",
+    "httpx==0.28.1",
+    "jsonschema==4.26.0",
+]
 
 [project.optional-dependencies]
-test = ["pytest==8.4.1", "ruff==0.11.13"]
+test = ["pytest==8.4.1", "ruff==0.11.13", "playwright==1.64.0"]
 
 [project.scripts]
 agentforge-demo = "agentforge.demo:main"

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
 
+from jsonschema import Draft202012Validator
 from pydantic import ValidationError
 
 from .models import StrictModel, ToolCall, ToolResult
@@ -29,10 +30,12 @@ class Permission(StrEnum):
 class ToolDefinition:
     name: str
     description: str
-    arguments_type: type[StrictModel]
+    arguments_type: type[StrictModel] | None
     handler: Callable[[Any], Awaitable[Any]]
     permission: Permission = Permission.READ_ONLY
     timeout_seconds: float = 2.0
+    input_schema: dict[str, Any] | None = None
+    source: str = "local"
 
     def __post_init__(self):
         if (
@@ -45,6 +48,15 @@ class ToolDefinition:
             raise ValueError("Permission must be explicitly classified")
         if not asyncio.iscoroutinefunction(self.handler):
             raise ValueError("Tools must use async handlers")
+        Draft202012Validator.check_schema(self.schema)
+
+    @property
+    def schema(self):
+        return (
+            self.input_schema
+            if self.input_schema is not None
+            else self.arguments_type.model_json_schema()
+        )
 
 
 class ToolRegistry:
@@ -58,7 +70,7 @@ class ToolRegistry:
             {
                 "name": tool.name,
                 "description": tool.description,
-                "parameters": tool.arguments_type.model_json_schema(),
+                "parameters": tool.schema,
             }
             for tool in self._tools.values()
             if tool.name in allowed and tool.permission == Permission.READ_ONLY
@@ -74,10 +86,35 @@ class ToolRegistry:
         if tool.permission == Permission.REQUIRES_APPROVAL:
             raise RuntimeFault("APPROVAL_REQUIRED")
         try:
-            arguments = tool.arguments_type.model_validate(call.arguments)
+            errors = Draft202012Validator(tool.schema).iter_errors(call.arguments)
+            if next(errors, None) is not None:
+                raise RuntimeFault("INVALID_TOOL_ARGUMENTS")
+            arguments = (
+                tool.arguments_type.model_validate(call.arguments)
+                if tool.arguments_type is not None
+                else call.arguments
+            )
         except ValidationError:
             raise RuntimeFault("INVALID_TOOL_ARGUMENTS") from None
         return tool, arguments
+
+    def metadata(self):
+        return [
+            {
+                "name": tool.name,
+                "description": tool.description,
+                "input_schema": tool.schema,
+                "permission": tool.permission.value,
+                "timeout_seconds": tool.timeout_seconds,
+                "source": tool.source,
+            }
+            for tool in self._tools.values()
+        ]
+
+    def add(self, tool: ToolDefinition):
+        if tool.name in self._tools:
+            raise ValueError("Duplicate tool name")
+        self._tools[tool.name] = tool
 
     async def dispatch(self, call: ToolCall, allowed: frozenset[str]) -> ToolResult:
         tool, arguments = self.validate(call, allowed)

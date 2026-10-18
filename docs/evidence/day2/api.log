@@ -1,0 +1,37 @@
+INFO:     Started server process [47316]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:62642 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62654 - "POST /api/runs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:62655 - "GET /api/runs/4b47c978-f206-401f-be7e-2b51ceac7476 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62656 - "GET /api/runs/4b47c978-f206-401f-be7e-2b51ceac7476/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62657 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62658 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64351 - "GET /api/agents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64353 - "GET /api/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64355 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56349 - "POST /api/agents HTTP/1.1" 201 Created
+INFO:     127.0.0.1:56352 - "POST /api/runs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:63457 - "GET /api/runs/910e11fc-84e2-4e85-be0a-9068e2e7bf9b HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63458 - "GET /api/runs/910e11fc-84e2-4e85-be0a-9068e2e7bf9b/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61901 - "POST /api/runs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:59367 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59368 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52729 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55222 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55223 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62361 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62362 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50091 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50092 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49341 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49342 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52937 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52938 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50867 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50868 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51814 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51815 - "GET /api/runs/982ea523-a396-4d4f-867a-0033c8f14eda/steps HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53483 - "POST /api/runs HTTP/1.1" 503 Service Unavailable

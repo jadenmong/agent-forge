@@ -1,0 +1,8 @@
+{
+  "curl": "PASS: created and queried a real Mock Run, 2 tool steps",
+  "browser": "PASS: created Agent, ran 2 local tools and 2 MCP tools, missing Live key error visible",
+  "live_external_api": "NOT_TESTED: OPENAI_API_KEY and OPENAI_MODEL not configured",
+  "mcp_sdk": "2.3.0",
+  "mcp_protocol": "2026-07-28",
+  "transport": "stdio"
+}

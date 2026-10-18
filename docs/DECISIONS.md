@@ -1,5 +1,7 @@
 # 设计决策
 
+> 当前最新为文末 D008–D011（Day 2，2026-10-17）。前面各节保留对应日期的历史范围，不能把其中“尚未实现”当作最新状态；当前验收见 FEATURE_MATRIX。
+
 ## D001 — 2026-10-14：按当日里程碑实现
 
 依据 PRD §10，先交付 Mock Runner、Registry、状态机及单测；不提前搭建未运行的完整平台。
@@ -59,3 +61,38 @@ wall time 包含模型和工具；模型/工具超时、次数/token 上限记�
 新增开发依赖 Ruff 0.11.13，统一承担格式化和基础静态检查，避免同时配置多个格式工具；不是生产依赖，也不要求追随最新版。
 配置与 check 模式参考 [Ruff 官方配置](https://docs.astral.sh/ruff/configuration/)及[格式化文档](https://docs.astral.sh/ruff/formatter/)，实际使用锁定版本运行验证。
 新证据写入 `evidence/day1-completion/`，历史交付和旧证据保留。完整平台 P0 仍需后续模块验收。
+
+## D008 — 2026-10-17：锁定依赖并验证实际 API
+
+官方 MCP v2 文档与实际可安装版本一致，采用 mcp==2.3.0、其固定依赖 mcp-types==2.3.0；支持的本次协议为 2026-07-28，transport 为 stdio。
+已读取下载 wheel 和安装后签名，确认 `mcp.server.MCPServer`、`mcp.Client`、`StdioServerParameters`、`list_tools`、`call_tool`、snake_case 字段和 `run(transport="stdio")` 实际存在，随后进行真实调用。
+差异：SDK 2.3.0 要求 pydantic>=2.12，Day 1 的 2.11.7 不满足。改为固定 2.14.1，重新 editable 安装刷新项目元数据；pip check 无冲突，原 70 项测试回归通过。
+其他直接依赖：openai 3.33.0、FastAPI 0.143.3、Uvicorn 0.54.0、HTTPX 0.28.1、jsonschema 4.26.0。MCP 内部使用 httpx2，不与 OpenAI/HTTPX 测试的 httpx 混用。
+Python 直接依赖固定于 pyproject，完整本次环境见 evidence/day2/environment.txt，尚非跨平台传递依赖锁文件；前端固定版本并提交 package-lock.json，使用 npm ci。
+官方依据：[v2 变化](https://py.sdk.modelcontextprotocol.io/whats-new/)、[Client](https://py.sdk.modelcontextprotocol.io/client/)、[协议模式](https://py.sdk.modelcontextprotocol.io/protocol-versions/)、[迁移源码](https://github.com/modelcontextprotocol/python-sdk/blob/main/docs/migration.md)。
+
+## D009 — Responses 只承担 HTTP 和协议翻译
+
+`openai_adapter.py` 实现 OpenAIResponsesAdapter；Runtime 仍独立控制循环和分派。真实模型名与 Key 从环境读取，无默认真实模型；缺配置在创建 Run 时返回 503，不退回 Mock。
+采用 store=false 和完整有序协议重放：function_call、call_id 对应的 function_call_output，以及 reasoning 的 opaque encrypted_content。ModelReply.continuation 在内部上下文中传递，既不进入 RunView/事件，也不是持久化 checkpoint。
+不保留隐藏 reasoning 原文或摘要；需要续传但缺少加密状态时显式失败。当前仅支持文本/函数工具，其他提供商输出类型明确拒绝。
+未完成状态、拒绝、非法 JSON、未完成 function_call 均不执行工具。关闭 SDK 自动重试，HTTP/网络错误变为安全原因码；固定官方 API endpoint，不从客户端接收 URL。
+替代方案 previous_response_id + provider store 会引入提供商存储与连续性依赖，本次不采用。store=false 本身不等于账户级 ZDR，不能作数据保留承诺。
+官方依据：[Function calling](https://developers.openai.com/api/docs/guides/function-calling)、[Reasoning stateless continuation](https://developers.openai.com/api/docs/guides/reasoning)。离线 HTTP fixture 通过真实 SDK 解析，但不算外部 API 实测；本次无 Key，Live 未测。
+
+## D010 — MCP 固定目标、同一执行策略
+
+MCPServer 提供两个只读合成数据工具；Client 默认 auto，通过 server/discover 获得实际版本，应用拒绝非 2026-07-28。没有手写旧初始化，也没有使用 FastMCP v1。
+默认 stdio 命令完全由源码固定，不提供远程 URL/安装平台。每次发现和调用各自建立并关闭子进程，避免把 SDK 的异步生命周期跨请求/任务共享；代价是每次调用有进程启动开销，适合本机 Demo。
+发现结果只保留两个明确名称，加 mcp_ 前缀后加入已有 Registry，统一 allowlist、JSON Schema、权限、超时与输出大小检查。服务端 annotations 不用于授予权限。
+本地继续使用严格 Pydantic；MCP 动态输入 Schema 使用 jsonschema，且拒绝额外参数。服务端返回显式 Pydantic 输出模型，产生真实 structured_content，客户端还检查结果对象和大小。
+真实集成曾发现普通 dict 返回仅有文本、structured_content=null；改为结构化输出，未伪造 SDK 响应。另处理 SDK 异常组，保留已知安全错误码；断连、超时和工具错误不自动重试。
+兼容结论限于已验证的 2026-07-28 stdio 工具发现/调用子集，不声称通过完整协议一致性认证或任意 MCP Server 安全。
+
+## D011 — API、Workbench 与可观察边界
+
+FastAPI 暴露统一 data/request_id 与 error 契约，生成实际 OpenAPI。React/TS/Vite 只调用这些公开接口，轮询 Run 与 steps；不通过前端私有状态获得执行权限。
+Run 使用 asyncio.create_task 并保留强引用，正常关闭时取消；进程退出后全部 Agent/Run/Step/Event 丢失，不承诺恢复。单 worker，本机并发上限四个活动 Run，无队列或多租户。
+POST 创建不提供请求级幂等，重复请求产生独立只读资源；容量满 409，具体契约见 API_CONTRACT。写工具仍未开放，审批/持久化/幂等属于 Day 3。
+Live Key 永不传给浏览器；模式与 Mock 标签明确。成本缺价格为 unknown，不伪造 usage、延迟或质量指标。UI 显示步骤元数据，暂不实现完整历史 Trace/参数详情。
+采用两个开发命令交付；Docker 按 Day 2 允许的替代方案留待 Day 4。Playwright 使用实际浏览器完成创建 Agent、本地两工具、MCP 两工具与缺 Key 错误路径，并保存真实截图。

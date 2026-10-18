@@ -25,7 +25,7 @@ class AgentConfig(StrictModel):
         default="Read-only procurement demo", min_length=1, max_length=128
     )
     system_prompt: str = Field(default="Use only permitted tools.", max_length=16000)
-    model_adapter: Literal["mock"] = "mock"
+    model_adapter: Literal["mock", "openai"] = "mock"
     model_name: str = Field(default="deterministic-mock", min_length=1, max_length=128)
     allowed_tools: frozenset[str] = frozenset()
     limits: Limits = Field(default_factory=Limits)
@@ -59,7 +59,7 @@ class RunEvent(TypedDict):
     correlation_id: str
     timestamp: str
     type: str
-    mode: Literal["mock"]
+    mode: Literal["mock", "live"]
     payload: dict[str, Any]
 
 
@@ -73,6 +73,8 @@ class ModelReply(StrictModel):
     calls: tuple[ToolCall, ...] = ()
     final_text: str | None = Field(default=None, max_length=16000)
     usage_tokens: int | None = Field(default=None, ge=0)
+    # Only replayable protocol items. Never include hidden reasoning plaintext.
+    continuation: tuple[dict[str, Any], ...] = ()
 
     @model_validator(mode="after")
     def one_action(self):

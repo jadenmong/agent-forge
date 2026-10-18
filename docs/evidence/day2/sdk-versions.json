@@ -1,0 +1,14 @@
+{
+  "mcp": "2.3.0",
+  "mcp-types": "2.3.0",
+  "pydantic": "2.14.1",
+  "openai": "3.33.0",
+  "fastapi": "0.143.3",
+  "uvicorn": "0.54.0",
+  "httpx": "0.28.1",
+  "jsonschema": "4.26.0",
+  "playwright": "1.64.0",
+  "Client_signature": "(server: 'Server[Any] | MCPServer | Transport | StdioServerParameters | str', *, raise_exceptions: 'bool' = False, read_timeout_seconds: 'float | None' = None, sampling_callback: 'SamplingFnT | None' = None, sampling_capabilities: 'types.SamplingCapability | None' = None, list_roots_callback: 'ListRootsFnT | None' = None, logging_callback: 'LoggingFnT | None' = None, log_level: 'LoggingLevel | None' = None, message_handler: 'MessageHandlerFnT | None' = None, client_info: 'Implementation | None' = None, mode: 'ConnectMode' = 'auto', prior_discover: 'types.DiscoverResult | None' = None, elicitation_callback: 'ElicitationFnT | None' = None, input_required_max_rounds: 'int' = 10, extensions: 'Sequence[ClientExtension] | None' = None, cache: 'CacheConfig | None' = <factory>) -> None",
+  "MCPServer_run_signature": "(self, transport: \"Literal['stdio', 'sse', 'streamable-http']\" = 'stdio', **kwargs: 'Any') -> 'None'",
+  "mcp_pydantic_requirement": "pydantic>=2.12.0"
+}

@@ -1,5 +1,60 @@
 # 实际交付结果
 
+## 2026-10-17：Day 2 模型接入、MCP、API、Workbench
+
+执行前先运行 Day 1 `pytest -q`，原 70 项通过。SDK 安装要求升级 Pydantic 2.11.7→2.14.1；升级后再次对原两个测试文件单独回归，仍为 70 项通过。
+锁定官方 mcp==2.3.0、mcp-types==2.3.0，实际 stdio protocol_version=2026-07-28。版本、API 差异与官方来源见 DECISIONS D008–D011。
+
+实际命令包括：
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m pip install -e '.[test]'
+npm.cmd --prefix apps/web ci
+.\.venv\Scripts\python.exe -m ruff check src tests scripts --fix
+.\.venv\Scripts\python.exe -m ruff format src tests scripts
+.\.venv\Scripts\python.exe scripts/verify_day2.py
+.\.venv\Scripts\python.exe -m pip check
+```
+
+前端首次依赖通过 npm install --save-exact 安装并生成 package-lock；之后 README 使用 npm ci 复现。浏览器本次使用已安装 Edge 的 Playwright headless 模式。
+统一验证脚本实际运行检查、原 Day 1 套件、全量 pytest、前端类型检查/构建；启动 API/Web 后用真实 curl 和浏览器验证，再结束自己启动的进程。
+
+保存的最终原始摘要：
+
+```text
+All checks passed!
+17 files already formatted
+70 passed in 0.92s
+107 passed in 12.97s
+```
+
+全量 107 项，107 通过、0 失败：原 70 项加 37 项新测试；原套件的再次运行不重复计入全量数量。
+另外真实浏览器完成创建 Agent、Mock 两个本地工具、Mock 两个 MCP 工具和缺 Live Key 的错误路径，真实 curl 完成创建/查询/步骤。浏览器检查不计入 pytest 数量。
+这些耗时只是本次命令摘要，不是平台 p50/p95 或真实模型延迟。没有真实成本/模型质量数据。
+
+关键证据（相对 docs）：
+
+| 路径 | 含义 |
+|---|---|
+| evidence/day2/pytest.txt | 全量测试原始 stdout |
+| evidence/day2/day1-regression.txt | 升级后原 70 项回归 |
+| evidence/day2/ruff-check.txt / ruff-format.txt | 标准检查输出 |
+| evidence/day2/web-build.txt | TypeScript 与 Vite 构建原始输出 |
+| evidence/day2/health.json / environment.txt | 实际协议、版本与安装环境 |
+| evidence/day2/openapi.json | 实际生成规范 |
+| evidence/day2/curl-create.json / curl-run.json / curl-steps.json | 真实 curl 的创建、完成状态与两工具步骤 |
+| evidence/day2/workbench.png / workbench-mcp.png | 从实际运行界面保存的截图 |
+| evidence/day2/summary.json | 断言全部完成后由验证脚本生成的摘要 |
+| evidence/day2/initial-mcp-failure.txt | 真 stdio 的初始失败复现，structured_content 处理修复前 |
+
+Live：适配器已实现，外部 API **未测**；本次 OPENAI_API_KEY/OPENAI_MODEL 均未配置。HTTP fixture 经官方 SDK 解析仅证明协议处理，不证明供应商在线可用性或模型质量。
+MCP：真实 SDK 客户端—服务端已调用，通过发现、参数、超时和断连测试；兼容声明限于当前工具/stdio 子集。
+目前数据仍在内存，没有审批、持久化、重启恢复、幂等写入或 JSONL Evals。Docker 采用任务允许的两条开发命令替代，留待 Day 4。
+完整文件清单、五个面试问答和验收见 deliveries/2026-10-17-day2.md。
+
+---
+
 ## 2026-10-16：补齐 Day 1 详细清单
 
 新增独立模型调用限制、实际使用的类型化配置/结果/状态/步骤/事件、指定采购 fixture、命名 Mock 场景及 Ruff 检查。
