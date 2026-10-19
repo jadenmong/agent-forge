@@ -1,0 +1,580 @@
+{
+  "data": [
+    {
+      "event_id": 1,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 0,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.743267+00:00",
+      "type": "run.created",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 2,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 0,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.744874+00:00",
+      "type": "run.started",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 3,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 1,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.754792+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 4,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 1,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.762493+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 1,
+        "duration_ms": 0.0,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 5,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 2,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.769484+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "tool_name": "list_supplier_quotes",
+        "arguments_summary": "{}"
+      }
+    },
+    {
+      "event_id": 6,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 2,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.769484+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "tool_name": "list_supplier_quotes"
+      }
+    },
+    {
+      "event_id": 7,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 2,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.780556+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "quotes",
+        "duration_ms": 0.0,
+        "result_summary": "[{\"supplier\": \"A\", \"unit_price_cents\": 95000}, {\"supplier\": \"B\", \"unit_price_cents\": 98000}, {\"supplier\": \"C\", \"unit_price_cents\": 105000}]"
+      }
+    },
+    {
+      "event_id": 8,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 3,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.790982+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 9,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 3,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.800914+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 3,
+        "duration_ms": 15.000000000100044,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 10,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 4,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.811219+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "tool_name": "get_supplier_detail",
+        "arguments_summary": "{\"supplier\": \"A\"}"
+      }
+    },
+    {
+      "event_id": 11,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 4,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.811219+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 12,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 4,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.823134+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-A",
+        "duration_ms": 15.99999999996271,
+        "result_summary": "{\"supplier\": \"A\", \"delivery_days\": 7, \"warranty_months\": 24}"
+      }
+    },
+    {
+      "event_id": 13,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 5,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.835352+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-B",
+        "tool_name": "get_supplier_detail",
+        "arguments_summary": "{\"supplier\": \"B\"}"
+      }
+    },
+    {
+      "event_id": 14,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 5,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.835352+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-B",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 15,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 5,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.851052+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-B",
+        "duration_ms": 14.999999999986358,
+        "result_summary": "{\"supplier\": \"B\", \"delivery_days\": 3, \"warranty_months\": 36}"
+      }
+    },
+    {
+      "event_id": 16,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 6,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.865286+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-C",
+        "tool_name": "get_supplier_detail",
+        "arguments_summary": "{\"supplier\": \"C\"}"
+      }
+    },
+    {
+      "event_id": 17,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 6,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.865286+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-C",
+        "tool_name": "get_supplier_detail"
+      }
+    },
+    {
+      "event_id": 18,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 6,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.882194+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "detail-C",
+        "duration_ms": 15.99999999996271,
+        "result_summary": "{\"supplier\": \"C\", \"delivery_days\": 2, \"warranty_months\": 36}"
+      }
+    },
+    {
+      "event_id": 19,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 7,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.897129+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 20,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 7,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.914573+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 3,
+        "duration_ms": 15.99999999996271,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 21,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 8,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.932960+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-A",
+        "tool_name": "calculate_total_cost",
+        "arguments_summary": "{\"unit_price_cents\": 95000, \"quantity\": 20}"
+      }
+    },
+    {
+      "event_id": 22,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 8,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.932960+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-A",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 23,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 8,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.952779+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-A",
+        "duration_ms": 15.99999999996271,
+        "result_summary": "{\"total_cents\": 1900000}"
+      }
+    },
+    {
+      "event_id": 24,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 9,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.975488+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-B",
+        "tool_name": "calculate_total_cost",
+        "arguments_summary": "{\"unit_price_cents\": 98000, \"quantity\": 20}"
+      }
+    },
+    {
+      "event_id": 25,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 9,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.976489+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-B",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 26,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 9,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:00.998655+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-B",
+        "duration_ms": 16.000000000076398,
+        "result_summary": "{\"total_cents\": 1960000}"
+      }
+    },
+    {
+      "event_id": 27,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 10,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:01.022027+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-C",
+        "tool_name": "calculate_total_cost",
+        "arguments_summary": "{\"unit_price_cents\": 105000, \"quantity\": 20}"
+      }
+    },
+    {
+      "event_id": 28,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 10,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:01.022027+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-C",
+        "tool_name": "calculate_total_cost"
+      }
+    },
+    {
+      "event_id": 29,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 10,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:01.047406+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "total-C",
+        "duration_ms": 15.99999999996271,
+        "result_summary": "{\"total_cents\": 2100000}"
+      }
+    },
+    {
+      "event_id": 30,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 11,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:01.072195+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 31,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 11,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:01.096827+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 1,
+        "duration_ms": 15.99999999996271,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 32,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 12,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:01.122694+00:00",
+      "type": "tool.requested",
+      "mode": "mock",
+      "payload": {
+        "call_id": "purchase-draft",
+        "tool_name": "create_purchase_draft",
+        "arguments_summary": "{\"unit_price_cents\": 98000, \"quantity\": 20, \"supplier\": \"B\", \"budget_cents\": 2000000}"
+      }
+    },
+    {
+      "event_id": 33,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 13,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:01.122694+00:00",
+      "type": "approval.requested",
+      "mode": "mock",
+      "payload": {
+        "approval_id": "d8cf730e-f242-4769-9fd1-e12967d67188",
+        "call_id": "purchase-draft",
+        "tool_name": "create_purchase_draft",
+        "args_digest": "b25a0c13d533832131e22c7048f80b8ca72b8f54a32582cf436d58e995f904eb",
+        "arguments_summary": "{\"unit_price_cents\": 98000, \"quantity\": 20, \"supplier\": \"B\", \"budget_cents\": 2000000}",
+        "effect": "Insert one local demo draft; no real order."
+      }
+    },
+    {
+      "event_id": 34,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 13,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:01.122694+00:00",
+      "type": "run.checkpointed",
+      "mode": "mock",
+      "payload": {
+        "safe_point": "WAITING_APPROVAL",
+        "approval_id": "d8cf730e-f242-4769-9fd1-e12967d67188"
+      }
+    },
+    {
+      "event_id": 35,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 13,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:04.499586+00:00",
+      "type": "run.checkpoint_restored",
+      "mode": "mock",
+      "payload": {
+        "safe_point": "WAITING_APPROVAL"
+      }
+    },
+    {
+      "event_id": 36,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 13,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:06.571367+00:00",
+      "type": "approval.approved",
+      "mode": "mock",
+      "payload": {
+        "approval_id": "d8cf730e-f242-4769-9fd1-e12967d67188",
+        "args_digest": "b25a0c13d533832131e22c7048f80b8ca72b8f54a32582cf436d58e995f904eb",
+        "request_id": "aeff0450-c7fa-4060-8313-cf99f2737cd5"
+      }
+    },
+    {
+      "event_id": 37,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 12,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:06.572377+00:00",
+      "type": "tool.started",
+      "mode": "mock",
+      "payload": {
+        "call_id": "purchase-draft",
+        "tool_name": "create_purchase_draft"
+      }
+    },
+    {
+      "event_id": 38,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 12,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:06.576494+00:00",
+      "type": "tool.completed",
+      "mode": "mock",
+      "payload": {
+        "call_id": "purchase-draft",
+        "duration_ms": 0.0,
+        "result_summary": "{\"draft_id\": \"58f2a952-eebc-452b-98b4-f3d0421dba7d\", \"total_cents\": 1960000, \"status\": \"COMPLETED\"}"
+      }
+    },
+    {
+      "event_id": 39,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 13,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:06.576494+00:00",
+      "type": "run.checkpointed",
+      "mode": "mock",
+      "payload": {
+        "safe_point": "AFTER_APPROVED_TOOL"
+      }
+    },
+    {
+      "event_id": 40,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 13,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:06.610296+00:00",
+      "type": "run.resumed",
+      "mode": "mock",
+      "payload": {
+        "safe_point": "AFTER_APPROVED_TOOL"
+      }
+    },
+    {
+      "event_id": 41,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 14,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:06.638606+00:00",
+      "type": "model.requested",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 42,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 14,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:06.667702+00:00",
+      "type": "model.responded",
+      "mode": "mock",
+      "payload": {
+        "call_count": 0,
+        "duration_ms": 30.99999999994907,
+        "usage_tokens": null,
+        "token_accounting": "utf8_bytes_estimate"
+      }
+    },
+    {
+      "event_id": 43,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 14,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:06.667702+00:00",
+      "type": "run.completed",
+      "mode": "mock",
+      "payload": {}
+    },
+    {
+      "event_id": 44,
+      "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "step_id": 14,
+      "correlation_id": "8c609121-304d-44e0-bdab-215ebd782275",
+      "timestamp": "2026-10-19T01:22:06.667702+00:00",
+      "type": "run.finished",
+      "mode": "mock",
+      "payload": {
+        "duration_ms": 62.99999999998818
+      }
+    }
+  ],
+  "request_id": "1d497174-10e0-4da3-995d-79e1653772e1"
+}

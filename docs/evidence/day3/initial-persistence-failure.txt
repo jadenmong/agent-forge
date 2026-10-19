@@ -1,0 +1,36 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+_________ test_unapproved_write_is_persisted_pending_with_zero_drafts _________
+tests\test_persistence.py:33: in test_unapproved_write_is_persisted_pending_with_zero_drafts
+    store, _, run = waiting_run(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^
+tests\test_persistence.py:16: in waiting_run
+    from agentforge.storage import Storage
+E   ModuleNotFoundError: No module named 'agentforge.storage'
+_____________________ test_rejection_never_creates_draft ______________________
+tests\test_persistence.py:45: in test_rejection_never_creates_draft
+    store, registry, run = waiting_run(tmp_path)
+                           ^^^^^^^^^^^^^^^^^^^^^
+tests\test_persistence.py:16: in waiting_run
+    from agentforge.storage import Storage
+E   ModuleNotFoundError: No module named 'agentforge.storage'
+________ test_sequential_and_concurrent_approve_create_only_one_draft _________
+tests\test_persistence.py:54: in test_sequential_and_concurrent_approve_create_only_one_draft
+    store, registry, run = waiting_run(tmp_path)
+                           ^^^^^^^^^^^^^^^^^^^^^
+tests\test_persistence.py:16: in waiting_run
+    from agentforge.storage import Storage
+E   ModuleNotFoundError: No module named 'agentforge.storage'
+____________________ test_conflicting_decision_is_rejected ____________________
+tests\test_persistence.py:69: in test_conflicting_decision_is_rejected
+    store, registry, run = waiting_run(tmp_path)
+                           ^^^^^^^^^^^^^^^^^^^^^
+tests\test_persistence.py:16: in waiting_run
+    from agentforge.storage import Storage
+E   ModuleNotFoundError: No module named 'agentforge.storage'
+=========================== short test summary info ===========================
+FAILED tests/test_persistence.py::test_unapproved_write_is_persisted_pending_with_zero_drafts
+FAILED tests/test_persistence.py::test_rejection_never_creates_draft - Module...
+FAILED tests/test_persistence.py::test_sequential_and_concurrent_approve_create_only_one_draft
+FAILED tests/test_persistence.py::test_conflicting_decision_is_rejected - Mod...
+4 failed in 1.22s

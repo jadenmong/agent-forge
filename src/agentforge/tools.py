@@ -31,7 +31,7 @@ class ToolDefinition:
     name: str
     description: str
     arguments_type: type[StrictModel] | None
-    handler: Callable[[Any], Awaitable[Any]]
+    handler: Callable[[Any], Awaitable[Any]] | None
     permission: Permission = Permission.READ_ONLY
     timeout_seconds: float = 2.0
     input_schema: dict[str, Any] | None = None
@@ -46,7 +46,9 @@ class ToolDefinition:
             raise ValueError("Invalid tool name or timeout")
         if not isinstance(self.permission, Permission):
             raise ValueError("Permission must be explicitly classified")
-        if not asyncio.iscoroutinefunction(self.handler):
+        if not asyncio.iscoroutinefunction(self.handler) and not (
+            self.handler is None and self.permission == Permission.REQUIRES_APPROVAL
+        ):
             raise ValueError("Tools must use async handlers")
         Draft202012Validator.check_schema(self.schema)
 
@@ -65,7 +67,9 @@ class ToolRegistry:
         if len(self._tools) != len(tools):
             raise ValueError("Duplicate tool name")
 
-    def schemas(self, allowed: frozenset[str]) -> list[dict[str, Any]]:
+    def schemas(
+        self, allowed: frozenset[str], *, include_approval=False
+    ) -> list[dict[str, Any]]:
         return [
             {
                 "name": tool.name,
@@ -73,17 +77,22 @@ class ToolRegistry:
                 "parameters": tool.schema,
             }
             for tool in self._tools.values()
-            if tool.name in allowed and tool.permission == Permission.READ_ONLY
+            if tool.name in allowed
+            and (
+                tool.permission == Permission.READ_ONLY
+                or include_approval
+                and tool.permission == Permission.REQUIRES_APPROVAL
+            )
         ]
 
-    def validate(self, call: ToolCall, allowed: frozenset[str]):
+    def validate(self, call: ToolCall, allowed: frozenset[str], *, for_approval=False):
         tool = self._tools.get(call.tool_name)
         if tool is None:
             raise RuntimeFault("UNKNOWN_TOOL")
         if tool.name not in allowed or tool.permission == Permission.DENIED:
             raise RuntimeFault("TOOL_FORBIDDEN")
-        # No approval bypass parameter exists. Writes stay disabled until day three.
-        if tool.permission == Permission.REQUIRES_APPROVAL:
+        # for_approval only prepares a bound pending call; dispatch never sets it.
+        if tool.permission == Permission.REQUIRES_APPROVAL and not for_approval:
             raise RuntimeFault("APPROVAL_REQUIRED")
         try:
             errors = Draft202012Validator(tool.schema).iter_errors(call.arguments)

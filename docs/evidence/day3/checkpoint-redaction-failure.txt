@@ -1,0 +1,21 @@
+.                                             [100%]
+================================== FAILURES ===================================
+__________ test_corrupted_waiting_checkpoint_fails_closed_on_startup __________
+tests\test_persistence.py:274: in test_corrupted_waiting_checkpoint_fails_closed_on_startup
+    store.recover()
+src\agentforge\storage.py:625: in recover
+    self._verify_checkpoint(session, run)
+src\agentforge\storage.py:435: in _verify_checkpoint
+    raise RuntimeFault("CHECKPOINT_INVALID")
+E   agentforge.tools.RuntimeFault: CHECKPOINT_INVALID
+_________ test_trace_redacts_secrets_and_pii_without_mangling_digest __________
+tests\test_persistence.py:286: in test_trace_redacts_secrets_and_pii_without_mangling_digest
+    assert redacted["args_digest"] == value["args_digest"]
+E   AssertionError: assert 'abcdef[REDACTED]ff' == 'abcdef13812345678ff'
+E     
+E     - abcdef13812345678ff
+E     + abcdef[REDACTED]ff
+=========================== short test summary info ===========================
+FAILED tests/test_persistence.py::test_corrupted_waiting_checkpoint_fails_closed_on_startup
+FAILED tests/test_persistence.py::test_trace_redacts_secrets_and_pii_without_mangling_digest
+2 failed, 26 passed in 9.37s

@@ -1,9 +1,9 @@
-"""Local, single-process REST API. All state is lost on process exit."""
+"""Local REST API backed by one SQLite demo database and one task owner."""
 
-import asyncio
 import os
 from contextlib import asynccontextmanager
 from dataclasses import asdict
+from pathlib import Path
 from typing import Generic, Literal, TypeVar
 from uuid import uuid4
 
@@ -13,20 +13,12 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.exceptions import HTTPException
 
-from .demo import TOOL_NAMES, demo_adapter, demo_registry
+from .demo import TOOL_NAMES, demo_registry
 from .mcp_adapter import MCPClientAdapter
-from .models import (
-    AgentConfig,
-    DeterministicMockAdapter,
-    Limits,
-    ModelReply,
-    RunEvent,
-    RunStep,
-    StrictModel,
-    ToolCall,
-)
-from .openai_adapter import OpenAIResponsesAdapter
-from .runtime import RunState, RuntimeEngine, Status
+from .models import AgentConfig, Limits, RunEvent, RunStep, StrictModel
+from .runtime import Status
+from .service import RunService
+from .storage import Storage
 from .tools import RuntimeFault
 
 T = TypeVar("T")
@@ -50,7 +42,8 @@ class ErrorEnvelope(BaseModel):
 class AgentCreate(StrictModel):
     name: str = Field(min_length=1, max_length=128)
     system_prompt: str = Field(
-        default="Use only permitted read-only tools.", max_length=16000
+        default="Use only permitted tools. Writes require explicit human approval.",
+        max_length=16000,
     )
     model_adapter: Literal["mock", "openai"] = "mock"
     allowed_tools: list[str] = Field(
@@ -63,7 +56,34 @@ class RunCreate(StrictModel):
     agent_id: str
     input: str = Field(min_length=1, max_length=16000)
     mode: Literal["mock", "live"] = "mock"
-    mock_scenario: Literal["two-tools", "procurement", "mcp"] = "two-tools"
+    mock_scenario: Literal[
+        "two-tools", "procurement", "mcp", "purchase", "budget-low"
+    ] = "two-tools"
+
+
+class ApprovalDecision(StrictModel):
+    approval_id: str
+    decision: Literal["approve", "reject"]
+
+
+class ApprovalView(BaseModel):
+    approval_id: str
+    run_id: str
+    call_id: str
+    tool_name: str
+    request_payload: dict
+    args_digest: str
+    status: Literal["PENDING", "APPROVED", "REJECTED"]
+    created_at: str
+    decided_at: str | None
+    effect: str
+
+
+class DecisionView(BaseModel):
+    run_id: str
+    status: Status
+    approval: ApprovalView
+    replayed: bool
 
 
 class RunView(BaseModel):
@@ -80,6 +100,11 @@ class RunView(BaseModel):
     token_accounting: str
     cost: None
     output: str | None
+    input_summary: str | None
+    started_at: str | None
+    finished_at: str | None
+    active_seconds: float
+    approval_wait_seconds: float
 
 
 class ToolView(BaseModel):
@@ -98,6 +123,7 @@ class HealthView(BaseModel):
     mcp_sdk: str
     mcp_protocol: str
     mcp_transport: str
+    schema_version: int
 
 
 class ApiError(Exception):
@@ -105,31 +131,46 @@ class ApiError(Exception):
         self.status, self.code, self.message = status, code, message
 
 
-def create_app() -> FastAPI:
-    agents: dict[str, AgentConfig] = {}
-    runs: dict[str, RunState] = {}
-    tasks: set[asyncio.Task] = set()
-    registry = demo_registry()
+def create_app(database_path=None) -> FastAPI:
+    path = (
+        database_path
+        or os.environ.get("AGENTFORGE_DB_PATH")
+        or Path(__file__).resolve().parents[2] / "data/demo.db"
+    )
+    storage = Storage(path)
+    registry = demo_registry(include_purchase=True)
+    service = RunService(storage, registry)
     mcp = MCPClientAdapter()
 
     @asynccontextmanager
     async def lifespan(app):
+        storage.initialize()
+        storage.recover()
         for tool in await mcp.discover():
             registry.add(tool)
-        agents["procurement-demo"] = AgentConfig(allowed_tools=TOOL_NAMES)
-        agents["mcp-demo"] = AgentConfig(
-            id="mcp-demo",
-            name="MCP read-only demo",
-            allowed_tools=frozenset(mcp.tool_names),
-        )
-        yield
-        for task in list(tasks):
-            task.cancel()
-        await asyncio.gather(*tasks, return_exceptions=True)
+        for config in (
+            AgentConfig(allowed_tools=TOOL_NAMES),
+            AgentConfig(
+                id="mcp-demo",
+                name="MCP read-only demo",
+                allowed_tools=frozenset(mcp.tool_names),
+            ),
+            AgentConfig(
+                id="purchase-demo",
+                name="Purchase approval demo",
+                allowed_tools=TOOL_NAMES | {"create_purchase_draft"},
+            ),
+        ):
+            storage.save_agent(config)
+        try:
+            yield
+        finally:
+            await service.close()
+            storage.close()
 
     app = FastAPI(
         title="AgentForge",
-        version="0.2.0",
+        version="0.3.0",
         lifespan=lifespan,
         responses={
             code: {"model": ErrorEnvelope} for code in (400, 404, 409, 422, 500, 503)
@@ -167,6 +208,33 @@ def create_app() -> FastAPI:
     async def api_error(request, exc):
         return error(request, exc.status, exc.code, exc.message)
 
+    @app.exception_handler(RuntimeFault)
+    async def runtime_error(request, exc):
+        if exc.code in {"RUN_NOT_FOUND", "AGENT_NOT_FOUND", "APPROVAL_NOT_FOUND"}:
+            return error(
+                request, 404, exc.code, "The requested resource was not found."
+            )
+        if exc.code == "LIVE_NOT_CONFIGURED":
+            return error(
+                request,
+                503,
+                exc.code,
+                "Set OPENAI_API_KEY and OPENAI_MODEL on the server before using Live.",
+            )
+        if exc.code == "STORAGE_BUSY":
+            return error(
+                request,
+                503,
+                exc.code,
+                "Local storage is busy; query the current decision before retrying.",
+            )
+        return error(
+            request,
+            409,
+            exc.code,
+            "The operation conflicts with the current state or policy; refresh the Run and approval.",
+        )
+
     @app.exception_handler(RequestValidationError)
     async def validation_error(request, exc):
         return error(
@@ -192,7 +260,8 @@ def create_app() -> FastAPI:
             request,
             {
                 "status": "ok",
-                "storage": "memory",
+                "storage": "sqlite",
+                "schema_version": 1,
                 "live_configured": bool(
                     os.environ.get("OPENAI_API_KEY", "").strip()
                     and os.environ.get("OPENAI_MODEL", "").strip()
@@ -205,17 +274,19 @@ def create_app() -> FastAPI:
 
     @app.get("/api/agents", response_model=Envelope[list[AgentConfig]])
     async def list_agents(request: Request):
-        return envelope(request, list(agents.values()))
+        return envelope(request, storage.agents())
 
     @app.post("/api/agents", status_code=201, response_model=Envelope[AgentConfig])
     async def create_agent(request: Request, body: AgentCreate):
-        if not set(body.allowed_tools) <= {t["name"] for t in registry.metadata()}:
+        if not set(body.allowed_tools) <= {
+            tool["name"] for tool in registry.metadata()
+        }:
             raise ApiError(422, "UNKNOWN_TOOL", "Select only registered tools.")
-        if len(agents) >= 100:
+        if len(storage.agents()) >= 100:
             raise ApiError(
                 409,
                 "CAPACITY_REACHED",
-                "Restart the local service to clear demo history.",
+                "The local demo agent capacity has been reached.",
             )
         config = AgentConfig(
             id=str(uuid4()),
@@ -228,101 +299,27 @@ def create_app() -> FastAPI:
             if body.model_adapter == "openai"
             else "deterministic-mock",
         )
-        agents[config.id] = config
+        storage.save_agent(config)
         return envelope(request, config)
 
     @app.get("/api/agents/{agent_id}", response_model=Envelope[AgentConfig])
     async def get_agent(request: Request, agent_id: str):
-        if agent_id not in agents:
-            raise ApiError(404, "AGENT_NOT_FOUND", "Agent was not found.")
-        return envelope(request, agents[agent_id])
+        config = next(
+            (agent for agent in storage.agents() if agent.id == agent_id), None
+        )
+        if config is None:
+            raise RuntimeFault("AGENT_NOT_FOUND")
+        return envelope(request, config)
 
     @app.get("/api/tools", response_model=Envelope[list[ToolView]])
     async def tools(request: Request):
         return envelope(request, registry.metadata())
 
-    async def execute(adapter, body, config, state):
-        try:
-            await RuntimeEngine(registry).run(
-                adapter, body.input, config=config, state=state
-            )
-        except asyncio.CancelledError:
-            raise
-        except Exception:
-            if state.status == Status.RUNNING:
-                state.transition(Status.FAILED)
-                state.stop_reason = "INTERNAL_ERROR"
-                state.emit("run.failed", code="INTERNAL_ERROR")
-        finally:
-            if isinstance(adapter, OpenAIResponsesAdapter):
-                await adapter.aclose()
-
     @app.post("/api/runs", status_code=202, response_model=Envelope[RunView])
     async def create_run(request: Request, body: RunCreate):
-        if body.agent_id not in agents:
-            raise ApiError(404, "AGENT_NOT_FOUND", "Agent was not found.")
         if not body.input.strip():
             raise ApiError(422, "INVALID_REQUEST", "Task input must not be blank.")
-        if len(tasks) >= 4 or len(runs) >= 200:
-            raise ApiError(
-                409, "CAPACITY_REACHED", "Local run capacity has been reached."
-            )
-        config = agents[body.agent_id].model_copy(
-            update={
-                "model_adapter": "openai" if body.mode == "live" else "mock",
-                "model_name": (
-                    os.environ.get("OPENAI_MODEL", "").strip() or "not_configured"
-                )
-                if body.mode == "live"
-                else "deterministic-mock",
-            }
-        )
-        if body.mode == "live":
-            try:
-                adapter = OpenAIResponsesAdapter()
-            except RuntimeFault:
-                raise ApiError(
-                    503,
-                    "LIVE_NOT_CONFIGURED",
-                    "Set OPENAI_API_KEY and OPENAI_MODEL on the server before using Live.",
-                ) from None
-        elif body.mock_scenario == "mcp":
-            adapter = DeterministicMockAdapter(
-                (
-                    ModelReply(
-                        calls=(
-                            ToolCall(
-                                call_id="mcp-q",
-                                tool_name="mcp_list_supplier_quotes",
-                                arguments={},
-                            ),
-                        )
-                    ),
-                    ModelReply(
-                        calls=(
-                            ToolCall(
-                                call_id="mcp-d",
-                                tool_name="mcp_get_supplier_detail",
-                                arguments={"supplier": "A"},
-                            ),
-                        )
-                    ),
-                    ModelReply(final_text="[Mock] Two MCP read-only calls completed."),
-                )
-            )
-        else:
-            adapter = demo_adapter(body.mock_scenario)
-        state = RunState(agent_id=config.id, mode=body.mode)
-        runs[state.run_id] = state
-        task = asyncio.create_task(execute(adapter, body, config, state))
-        tasks.add(task)
-        task.add_done_callback(tasks.discard)
-        return envelope(request, state)
-
-    def find_run(run_id):
-        if run_id not in runs:
-            raise ApiError(404, "RUN_NOT_FOUND", "Run was not found.")
-        return runs[run_id]
+        return envelope(request, await service.start(body))
 
     @app.get("/api/runs", response_model=Envelope[list[RunView]])
     async def list_runs(
@@ -330,17 +327,17 @@ def create_app() -> FastAPI:
         offset: int = Query(0, ge=0),
         limit: int = Query(20, ge=1, le=100),
     ):
-        return envelope(
-            request, list(reversed(list(runs.values())))[offset : offset + limit]
-        )
+        return envelope(request, storage.runs(offset, limit))
 
     @app.get("/api/runs/{run_id}", response_model=Envelope[RunView])
     async def get_run(request: Request, run_id: str):
-        return envelope(request, find_run(run_id))
+        return envelope(request, storage.get_run(run_id))
 
     @app.get("/api/runs/{run_id}/steps", response_model=Envelope[list[RunStep]])
     async def steps(request: Request, run_id: str):
-        return envelope(request, [asdict(step) for step in find_run(run_id).steps])
+        return envelope(
+            request, [asdict(step) for step in storage.get_run(run_id).steps]
+        )
 
     @app.get("/api/runs/{run_id}/events", response_model=Envelope[list[RunEvent]])
     async def events(
@@ -350,10 +347,45 @@ def create_app() -> FastAPI:
             request,
             [
                 event
-                for event in find_run(run_id).events
+                for event in storage.get_run(run_id).events
                 if event["event_id"] > after_event_id
             ],
         )
+
+    @app.get("/api/approvals", response_model=Envelope[list[ApprovalView]])
+    async def inbox(request: Request):
+        return envelope(request, storage.approvals(pending_only=True))
+
+    @app.get(
+        "/api/runs/{run_id}/approvals", response_model=Envelope[list[ApprovalView]]
+    )
+    async def approvals(request: Request, run_id: str):
+        storage.get_run(run_id)
+        return envelope(request, storage.approvals(run_id))
+
+    @app.post("/api/runs/{run_id}/approve", response_model=Envelope[DecisionView])
+    async def decide(request: Request, run_id: str, body: ApprovalDecision):
+        result = await service.decide(
+            run_id, body.approval_id, body.decision, request.state.request_id
+        )
+        approval = next(
+            a for a in storage.approvals(run_id) if a["approval_id"] == body.approval_id
+        )
+        return envelope(
+            request,
+            {
+                "run_id": run_id,
+                "status": result.run.status,
+                "approval": approval,
+                "replayed": result.replayed,
+            },
+        )
+
+    @app.post(
+        "/api/runs/{run_id}/resume", status_code=202, response_model=Envelope[RunView]
+    )
+    async def resume(request: Request, run_id: str):
+        return envelope(request, await service.resume(run_id))
 
     return app
 

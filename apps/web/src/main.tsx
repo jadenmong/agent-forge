@@ -5,8 +5,10 @@ import './style.css';
 
 type Tool = { name: string; description: string; source: string; permission: string };
 type Agent = { id: string; name: string; allowed_tools: string[]; model_adapter: string };
-type Run = { run_id: string; mode: string; status: string; stop_reason: string | null; output: string | null; model_call_count: number; tool_call_count: number; cost: number | null; token_accounting: string };
-type Step = { seq: number; kind: string; status: string; tool_name: string | null; duration_ms: number | null; error_code: string | null };
+type Run = { run_id: string; mode: string; status: string; stop_reason: string | null; output: string | null; model_call_count: number; tool_call_count: number; cost: number | null; token_accounting: string; input_summary: string | null; active_seconds: number; approval_wait_seconds: number };
+type Step = { seq: number; kind: string; status: string; tool_name: string | null; duration_ms: number | null; error_code: string | null; started_at: string; arguments_summary: string | null; result_summary: string | null };
+type RunEvent = { event_id: number; step_id: number; timestamp: string; type: string; payload: Record<string, unknown> };
+type Approval = { approval_id: string; run_id: string; call_id: string; tool_name: string; request_payload: Record<string, unknown>; args_digest: string; status: string; effect: string };
 type Health = { live_configured: boolean; mcp_sdk: string; mcp_protocol: string };
 
 async function api<T>(path: string, body?: unknown): Promise<T> {
@@ -29,6 +31,11 @@ function App() {
   const [scenario, setScenario] = useState('two-tools');
   const [run, setRun] = useState<Run | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
+  const [events, setEvents] = useState<RunEvent[]>([]);
+  const [history, setHistory] = useState<Run[]>([]);
+  const [approvals, setApprovals] = useState<Approval[]>([]);
+  const [failedOnly, setFailedOnly] = useState(false);
+  const [eventFilter, setEventFilter] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState('我的只读 Agent');
@@ -42,28 +49,46 @@ function App() {
   const [budget, setBudget] = useState(64000);
 
   useEffect(() => {
-    Promise.all([api<Agent[]>('/api/agents'), api<Tool[]>('/api/tools'), api<Health>('/health')])
-      .then(([a, t, h]) => { setAgents(a); setTools(t); setHealth(h); setAllowed(t.filter(x => x.source === 'local').map(x => x.name)); })
+    Promise.all([api<Agent[]>('/api/agents'), api<Tool[]>('/api/tools'), api<Health>('/health'), api<Run[]>('/api/runs'), api<Approval[]>('/api/approvals')])
+      .then(([a, t, h, r, approvals]) => { setAgents(a); setTools(t); setHealth(h); setHistory(r); setApprovals(approvals); setAllowed(t.filter(x => x.source === 'local' && x.permission === 'READ_ONLY').map(x => x.name)); if (r[0]) void inspectRun(r[0].run_id).catch(e => setError(String(e.message))); })
       .catch(e => setError(String(e.message)));
   }, []);
 
   useEffect(() => {
-    if (!run || !['CREATED', 'RUNNING'].includes(run.status)) return;
+    if (!run || !['CREATED', 'RUNNING', 'WAITING_APPROVAL'].includes(run.status)) return;
     let stopped = false;
     const timer = window.setTimeout(() => {
-      Promise.all([api<Run>(`/api/runs/${run.run_id}`), api<Step[]>(`/api/runs/${run.run_id}/steps`)])
-        .then(([r, s]) => { if (!stopped) { setRun(r); setSteps(s); } })
+      Promise.all([api<Run>(`/api/runs/${run.run_id}`), api<Step[]>(`/api/runs/${run.run_id}/steps`), api<RunEvent[]>(`/api/runs/${run.run_id}/events`), api<Approval[]>('/api/approvals')])
+        .then(([r, s, e, a]) => { if (!stopped) { setRun(r); setHistory(previous => previous.map(saved => saved.run_id === r.run_id ? r : saved)); setSteps(s); setEvents(e); setApprovals(a); } })
         .catch(e => { if (!stopped) setError(String(e.message)); });
     }, 400);
     return () => { stopped = true; window.clearTimeout(timer); };
   }, [run]);
 
+  async function inspectRun(id: string) {
+    const [r, s, e] = await Promise.all([api<Run>(`/api/runs/${id}`), api<Step[]>(`/api/runs/${id}/steps`), api<RunEvent[]>(`/api/runs/${id}/events`)]);
+    setRun(r); setSteps(s); setEvents(e);
+  }
+
+  async function refreshLists() {
+    const [a, r] = await Promise.all([api<Approval[]>('/api/approvals'), api<Run[]>('/api/runs')]);
+    setApprovals(a); setHistory(r);
+  }
+
+  async function decideApproval(approval: Approval, decision: 'approve' | 'reject') {
+    setBusy(true); setError('');
+    try {
+      await api(`/api/runs/${approval.run_id}/approve`, { approval_id: approval.approval_id, decision });
+      await inspectRun(approval.run_id); await refreshLists();
+    } catch (e) { setError(e instanceof Error ? e.message : '审批失败'); }
+    finally { setBusy(false); }
+  }
+
   async function start(event: FormEvent) {
-    event.preventDefault(); setBusy(true); setError(''); setSteps([]); setRun(null);
+    event.preventDefault(); setBusy(true); setError(''); setSteps([]); setEvents([]); setRun(null);
     try {
       const created = await api<Run>('/api/runs', { agent_id: agentId, input: task, mode, mock_scenario: scenario });
-      const [current, currentSteps] = await Promise.all([api<Run>(`/api/runs/${created.run_id}`), api<Step[]>(`/api/runs/${created.run_id}/steps`)]);
-      setRun(current); setSteps(currentSteps);
+      await inspectRun(created.run_id); await refreshLists();
     } catch (e) { setError(e instanceof Error ? e.message : '启动失败'); }
     finally { setBusy(false); }
   }
@@ -85,13 +110,15 @@ function App() {
     {error && <div role="alert" className="error">{error}{run && <button type="button" onClick={() => { setError(''); api<Run>(`/api/runs/${run.run_id}`).then(setRun).catch(e => setError(String(e.message))); }}>重试查询</button>}</div>}
     <div className="layout"><section className="panel"><h2>运行任务</h2>
       <form onSubmit={start}>
-        <label>选择 Agent<select value={agentId} onChange={e => { setAgentId(e.target.value); setScenario(e.target.value === 'mcp-demo' ? 'mcp' : 'two-tools'); }}>{agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
+        <label>选择 Agent<select value={agentId} onChange={e => { setAgentId(e.target.value); setScenario(e.target.value === 'mcp-demo' ? 'mcp' : e.target.value === 'purchase-demo' ? 'purchase' : 'two-tools'); }}>{agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
         <label>模型模式<select value={mode} onChange={e => setMode(e.target.value)}><option value="mock">Mock · 无 Key</option><option value="live">Live · OpenAI Responses</option></select></label>
-        {mode === 'mock' && <label>演示场景<select value={scenario} onChange={e => setScenario(e.target.value)}><option value="two-tools">本地工具 · 串行两步</option><option value="procurement">本地工具 · 完整比较</option><option value="mcp">MCP · 两个只读工具</option></select></label>}
+        {mode === 'mock' && <label>演示场景<select value={scenario} onChange={e => setScenario(e.target.value)}><option value="two-tools">本地工具 · 串行两步</option><option value="procurement">本地工具 · 完整比较</option><option value="mcp">MCP · 两个只读工具</option><option value="purchase">采购草案 · 等待人工审批</option><option value="budget-low">采购草案 · 预算不足</option></select></label>}
         {mode === 'live' && <p className="notice">{health?.live_configured ? '服务端已配置 Live 凭据。' : '服务端尚未配置 OPENAI_API_KEY 和 OPENAI_MODEL；启动时会显示配置错误。'}</p>}
         <label>任务<textarea value={task} onChange={e => setTask(e.target.value)} required maxLength={16000} rows={4}/></label>
         <button disabled={running || !agents.length || !task.trim()}>{running ? '执行中…' : '启动 Run'}</button>
       </form>
+      <label>历史 Run<select value={run?.run_id ?? ''} onChange={e => { if (e.target.value) void inspectRun(e.target.value).catch(e => setError(String(e.message))); }}><option value="">选择已保存的任务</option>{history.map(r => <option key={r.run_id} value={r.run_id}>{r.status} · {r.input_summary?.slice(0, 28) ?? r.run_id}</option>)}</select></label>
+      <button type="button" className="secondary" onClick={() => void refreshLists().catch(e => setError(String(e.message)))}>刷新历史与待审批</button>
       <details><summary>创建 Agent</summary><form onSubmit={createAgent}>
         <label>Agent 名称<input value={name} onChange={e => setName(e.target.value)} required maxLength={128}/></label>
         <label>系统提示词<textarea value={prompt} onChange={e => setPrompt(e.target.value)} maxLength={16000}/></label>
@@ -100,15 +127,26 @@ function App() {
         <button disabled={running || !name.trim()}>保存 Agent</button>
       </form></details>
     </section><section className="panel trace" aria-live="polite"><h2>运行与步骤</h2>
+      <section className="approval-inbox"><h3>待审批</h3>{approvals.length === 0 ? <p className="muted">暂无可审批调用。</p> : approvals.map(approval => <article className="approval-card" data-testid="approval-card" key={approval.approval_id}>
+        <strong>{approval.tool_name}</strong><p>副作用：仅在本地 Demo 数据库新增采购草案，不下单。</p><p className="mono">Run {approval.run_id}<br/>Approval {approval.approval_id}</p>
+        <pre>{JSON.stringify(approval.request_payload, null, 2)}</pre><p className="mono">参数摘要 SHA-256：{approval.args_digest}</p>
+        <div className="actions"><button type="button" disabled={busy} onClick={() => void decideApproval(approval, 'approve')}>批准</button><button type="button" className="reject" disabled={busy} onClick={() => void decideApproval(approval, 'reject')}>拒绝</button><button type="button" className="secondary" onClick={() => void inspectRun(approval.run_id).catch(e => setError(String(e.message)))}>查看 Trace</button></div>
+      </article>)}</section>
       {!run ? <p className="muted">启动任务后，查看真实执行步骤。</p> : <>
         <div className="runhead"><span className="badge">{run.mode === 'mock' ? 'Mock' : 'Live'}</span><strong data-testid="run-status">{run.status}</strong></div>
         <p className="mono">Run {run.run_id}</p><p>终止原因：{run.stop_reason ?? '执行中'} · 模型 {run.model_call_count} 次 · 工具 {run.tool_call_count} 次</p>
-        <div className="tablewrap"><table><thead><tr><th>步骤</th><th>操作</th><th>状态</th><th>耗时</th></tr></thead><tbody>{steps.map(s => <tr key={s.seq} data-testid={s.kind === 'tool' ? 'tool-step' : 'model-step'}><td>{s.seq}</td><td>{s.tool_name ?? '模型响应'}{s.error_code && <small className="error-text">{s.error_code}</small>}</td><td>{s.status}</td><td>{s.duration_ms === null ? '—' : `${s.duration_ms.toFixed(1)} ms`}</td></tr>)}</tbody></table></div>
+        {run.status === 'RECONCILIATION_REQUIRED' && <p className="error">写入执行结果未知，需要人工核对；系统不会自动重发。</p>}
+        {run.status === 'INTERRUPTED' && <button type="button" disabled={busy} onClick={async () => { setBusy(true); setError(''); try { await api(`/api/runs/${run.run_id}/resume`, {}); await inspectRun(run.run_id); } catch (e) { setError(e instanceof Error ? e.message : '此断点不能恢复'); } finally { setBusy(false); } }}>尝试恢复已确认的安全断点</button>}
+        <p className="muted">活动执行 {run.active_seconds.toFixed(3)} s · 审批等待 {run.approval_wait_seconds.toFixed(3)} s</p>
+        <label className="check"><input type="checkbox" checked={failedOnly} onChange={e => setFailedOnly(e.target.checked)}/>只看失败步骤</label>
+        <div className="tablewrap"><table><thead><tr><th>步骤</th><th>操作 / 参数与结果摘要</th><th>状态</th><th>耗时</th></tr></thead><tbody>{steps.filter(s => !failedOnly || s.status === 'FAILED' || Boolean(s.error_code)).map(s => <tr key={s.seq} data-testid={`${s.kind}-step`}><td>{s.seq}</td><td>{s.kind === 'approval' ? `人工审批 · ${s.tool_name}` : s.tool_name ?? (s.kind === 'model' ? '模型响应' : 'Checkpoint')}<small>{new Date(s.started_at).toLocaleString('zh-CN')}</small>{s.error_code && <small className="error-text">{s.error_code}</small>}{(s.arguments_summary || s.result_summary) && <details className="step-details"><summary>参数 / 结果摘要</summary>{s.arguments_summary && <pre>{s.arguments_summary}</pre>}{s.result_summary && <pre>{s.result_summary}</pre>}</details>}</td><td>{s.status}</td><td>{s.duration_ms === null ? '—' : `${s.duration_ms.toFixed(1)} ms`}</td></tr>)}</tbody></table></div>
         {run.output && <><h3>结果</h3><pre>{run.output}</pre></>}
         <p className="muted">成本：{run.cost === null ? 'unknown' : run.cost} · Token 记账：{run.token_accounting}</p>
+        <h3>事件时间线</h3><label>筛选事件<input value={eventFilter} onChange={e => setEventFilter(e.target.value)} placeholder="approval / checkpoint / failed"/></label>
+        <ol className="events">{events.filter(e => e.type.includes(eventFilter)).map(e => <li key={e.event_id} data-testid="trace-event"><strong>{e.type}</strong><small>#{e.event_id} · step {e.step_id} · {new Date(e.timestamp).toLocaleString('zh-CN')}</small><details><summary>脱敏元数据</summary><pre>{JSON.stringify(e.payload, null, 2)}</pre></details></li>)}</ol>
       </>}
     </section></div>
-    <footer>状态保存在当前服务进程内，重启后清空。MCP SDK {health?.mcp_sdk ?? '…'} / {health?.mcp_protocol ?? '…'}。API 文档：<a href="http://127.0.0.1:8000/docs" target="_blank" rel="noreferrer">OpenAPI</a></footer>
+    <footer>历史与待审批任务已保存。仅支持明确的安全断点恢复，未知写入结果需核对。MCP SDK {health?.mcp_sdk ?? '…'} / {health?.mcp_protocol ?? '…'}。API 文档：<a href="/docs" target="_blank" rel="noreferrer">OpenAPI</a></footer>
   </main>;
 }
 

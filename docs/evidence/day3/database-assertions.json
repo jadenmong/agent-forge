@@ -1,0 +1,56 @@
+{
+  "before_approval": {
+    "run_steps": 13,
+    "run_events": 34,
+    "tool_invocations": 8,
+    "approvals": 1,
+    "purchase_drafts": 0,
+    "model_resume_state_digest": "afa5cdd5e881f9f23ddc3b5428648fa8f419682e8864ecf2c2b9d0d341d302b3",
+    "model_call_count": 4,
+    "tool_call_count": 7
+  },
+  "after_process_restart": {
+    "run_steps": 13,
+    "run_events": 35,
+    "tool_invocations": 8,
+    "approvals": 1,
+    "purchase_drafts": 0,
+    "model_resume_state_digest": "afa5cdd5e881f9f23ddc3b5428648fa8f419682e8864ecf2c2b9d0d341d302b3",
+    "model_call_count": 4,
+    "tool_call_count": 7
+  },
+  "after_approve": {
+    "run_steps": 14,
+    "run_events": 44,
+    "tool_invocations": 8,
+    "approvals": 1,
+    "purchase_drafts": 1,
+    "model_resume_state_digest": "06337d754495f4d90683122741e6e5cba9941a29aa7f3608962814cc1eef5fed",
+    "model_call_count": 5,
+    "tool_call_count": 8
+  },
+  "after_12_concurrent_replays": {
+    "run_steps": 14,
+    "run_events": 44,
+    "tool_invocations": 8,
+    "approvals": 1,
+    "purchase_drafts": 1,
+    "model_resume_state_digest": "06337d754495f4d90683122741e6e5cba9941a29aa7f3608962814cc1eef5fed",
+    "model_call_count": 5,
+    "tool_call_count": 8
+  },
+  "rejected_run": {
+    "run_id": "f8be6faf-e011-4bd1-8487-e53129d0cc60",
+    "run_steps": 13,
+    "run_events": 36,
+    "tool_invocations": 8,
+    "approvals": 1,
+    "purchase_drafts": 0,
+    "model_resume_state_digest": "52162fdbb80bef81b962f1dd2ce0fa98943454c36a1aacd05a3efe3b69eb26c1",
+    "model_call_count": 4,
+    "tool_call_count": 7
+  },
+  "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+  "approval_id": "d8cf730e-f242-4769-9fd1-e12967d67188",
+  "same_approval_and_context_restored": true
+}

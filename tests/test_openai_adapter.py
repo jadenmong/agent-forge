@@ -248,6 +248,103 @@ def test_live_requires_environment_configuration(monkeypatch):
         OpenAIResponsesAdapter()
 
 
+def test_encrypted_continuation_survives_sqlite_approval_checkpoint(tmp_path):
+    from sqlalchemy import func, select
+    from sqlalchemy.orm import Session
+
+    from agentforge.storage import PurchaseDraftRow, Storage
+
+    requests = []
+    reasoning = {
+        "type": "reasoning",
+        "id": "rs_saved",
+        "summary": [],
+        "encrypted_content": "opaque-fixture-state",
+    }
+    call = {
+        "type": "function_call",
+        "id": "fc_write",
+        "call_id": "call_write",
+        "status": "completed",
+        "name": "create_purchase_draft",
+        "arguments": json.dumps(
+            {
+                "supplier": "B",
+                "unit_price_cents": 98000,
+                "quantity": 20,
+                "budget_cents": 2000000,
+            }
+        ),
+    }
+
+    def handler(request):
+        body = json.loads(request.content)
+        requests.append(body)
+        if len(requests) == 1:
+            return httpx.Response(200, json=response([reasoning, call]))
+        assert body["input"][1:3] == [reasoning, call]
+        assert (
+            body["input"][3]["type"] == "function_call_output"
+            and body["input"][3]["call_id"] == "call_write"
+        )
+        assert json.loads(body["input"][3]["output"])["draft_id"]
+        return httpx.Response(
+            200, json=response([message("fixture continuation completed")])
+        )
+
+    async def check():
+        path = tmp_path / "provider-checkpoint.db"
+        store = Storage(path)
+        store.initialize()
+        registry = demo_registry(include_purchase=True)
+        config = AgentConfig(
+            model_adapter="openai",
+            model_name="offline-model",
+            allowed_tools=frozenset({"create_purchase_draft"}),
+        )
+        adapter = OpenAIResponsesAdapter(client_for(handler), model="offline-model")
+        try:
+            waiting = await RuntimeEngine(registry, storage=store).run(
+                adapter, "synthetic draft", config=config
+            )
+        finally:
+            await adapter.aclose()
+        assert (
+            waiting.status == Status.WAITING_APPROVAL and waiting.tool_call_count == 0
+        )
+        with Session(store.engine) as session:
+            assert (
+                session.scalar(select(func.count()).select_from(PurchaseDraftRow)) == 0
+            )
+        store.close()
+        restored = Storage(path)
+        restored.initialize()
+        restored.recover()
+        approval = restored.approvals(waiting.run_id)[0]
+        resumed = restored.decide(
+            waiting.run_id, approval["approval_id"], "approve", registry
+        ).run
+        adapter = OpenAIResponsesAdapter(client_for(handler), model="offline-model")
+        try:
+            done = await RuntimeEngine(registry, storage=restored).run(
+                adapter, "synthetic draft", config=config, state=resumed, resume=True
+            )
+        finally:
+            await adapter.aclose()
+        assert (
+            done.status == Status.COMPLETED
+            and done.output == "fixture continuation completed"
+        )
+        assert "opaque-fixture-state" not in json.dumps(done.events)
+        with Session(restored.engine) as session:
+            assert (
+                session.scalar(select(func.count()).select_from(PurchaseDraftRow)) == 1
+            )
+        restored.close()
+
+    asyncio.run(check())
+
+
 def test_incomplete_function_call_is_not_dispatched():
     async def check():
         output = [

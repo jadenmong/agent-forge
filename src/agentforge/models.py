@@ -43,13 +43,30 @@ class ToolResult(StrictModel):
 class RunStep:
     run_id: str
     seq: int
-    kind: Literal["model", "tool"]
+    kind: Literal["model", "tool", "approval", "checkpoint"]
     started_at: str
-    status: Literal["RUNNING", "COMPLETED", "FAILED", "CANCELLED"] = "RUNNING"
+    status: Literal[
+        "RUNNING", "COMPLETED", "FAILED", "CANCELLED", "WAITING_APPROVAL"
+    ] = "RUNNING"
     duration_ms: float | None = None
     error_code: str | None = None
     tool_name: str | None = None
     call_id: str | None = None
+    arguments_summary: str | None = None
+    result_summary: str | None = None
+
+
+@dataclass
+class ToolInvocation:
+    call_id: str
+    tool_name: str
+    validated_args: dict[str, Any]
+    permission: str
+    step_seq: int
+    status: str = "RUNNING"
+    result: Any = None
+    approval_id: str | None = None
+    idempotency_key: str | None = None
 
 
 class RunEvent(TypedDict):

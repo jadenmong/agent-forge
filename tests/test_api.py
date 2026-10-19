@@ -9,8 +9,8 @@ from agentforge.api import create_app
 
 
 @pytest.fixture(scope="module")
-def client():
-    with TestClient(create_app()) as client:
+def client(tmp_path_factory):
+    with TestClient(create_app(tmp_path_factory.mktemp("api") / "demo.db")) as client:
         yield client
 
 
@@ -119,10 +119,13 @@ def test_openapi_metadata_and_schema(client):
     assert "202" in spec["paths"]["/api/runs"]["post"]["responses"]
     assert "503" in spec["paths"]["/api/runs"]["post"]["responses"]
     metadata = client.get("/api/tools").json()["data"]
-    assert len(metadata) == 5 and {t["source"] for t in metadata} == {"local", "mcp"}
-    assert all(t["permission"] == "READ_ONLY" for t in metadata)
+    assert len(metadata) == 6 and {t["source"] for t in metadata} == {"local", "mcp"}
+    assert [t["name"] for t in metadata if t["permission"] == "REQUIRES_APPROVAL"] == [
+        "create_purchase_draft"
+    ]
+    assert all(t["permission"] == "READ_ONLY" for t in metadata if t["source"] == "mcp")
     health = client.get("/health").json()["data"]
-    assert health["mcp_protocol"] == "2026-07-28" and health["storage"] == "memory"
+    assert health["mcp_protocol"] == "2026-07-28" and health["storage"] == "sqlite"
 
 
 def test_not_found_and_invalid_cursor_use_error_envelope(client):

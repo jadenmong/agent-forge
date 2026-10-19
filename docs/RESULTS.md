@@ -1,5 +1,145 @@
 # 实际交付结果
 
+## 2026-10-18：Day 3 持久化、审批中断/恢复与 Trace
+
+先实际运行原 Day 2 全量测试：**107 passed in 13.05s**，见 [baseline-pytest.txt](evidence/day3/baseline-pytest.txt)。
+增加 SQLAlchemy==2.0.55 并安装，原接口目录随审批写工具/preset 扩展，API 测试改用隔离 SQLite。
+最终 **143 项、143 通过、0 失败**，比基线增加 36 项：persistence 30、approval_api 4、真实 API 进程重启 1、Responses SQLite 续传 1。参数化实例各计一项，不将浏览器检查重复计入 pytest。
+
+### 实际命令与原始摘要
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m pip install -e '.[test]'
+.\.venv\Scripts\python.exe -m ruff check src tests scripts
+.\.venv\Scripts\python.exe -m ruff format src tests scripts
+.\.venv\Scripts\python.exe -u scripts/verify_day3.py
+.\.venv\Scripts\python.exe -m pip check
+```
+
+统一脚本实际依次执行 Ruff check/format check、pytest -q --junitxml、npm run build、启动真实 API/Web、浏览器等待/重启/批准/拒绝/失败路径、SQL 查询和 curl。仅使用本机临时端口/临时 SQLite，清理自己的进程；移除验证子进程的 API_KEY 环境变量。不访问外部模型服务，依赖安装需包仓库或缓存。
+
+最终保存的原始摘要：
+
+```text
+All checks passed!
+24 files already formatted
+143 passed in 36.79s
+```
+
+前端 tsc --noEmit 与 vite build 成功；统一脚本 summary.status=PASS。实际 pip check 输出：
+
+```text
+No broken requirements found.
+```
+
+上面的秒数是本次测试命令摘要，不是平台吞吐/p50/p95。没有真实成本或 Live 质量数字。
+
+交付文档完成后，另用 Python 校验全部 18 份 Markdown 的本地链接、Day 3 JSON/JUnit 和四个新增 OpenAPI 路径，实际输出为：
+
+```text
+Markdown links: 18 files checked, 0 broken
+Day 3 evidence: valid JSON; JUnit 143 passed / 0 failed / 0 errors; 4 new OpenAPI endpoints verified
+```
+
+`git -c core.safecrlf=false diff --check` 退出 0；`git ls-files -- '*.db' '*.db-wal' '*.db-shm' '.env'` 没有输出。三张截图均实际打开检查。
+
+### 真实数据库与进程证据
+
+实际浏览器演示的 Run 为 `02799461-d6d8-4efa-b029-301d967cbbd1`，approval 为 `bd86e59c-0bdd-40e3-9660-b7ad76e3c7f3`。这些是本次运行生成的 ID，重跑会变化。
+
+| 检查点 | purchase_drafts 行数 | 其他断言 |
+|---|---:|---|
+| 等待审批 | 0 | 1 approval、8 invocation，其中 7 个已完成读工具/1 个 pending 写调用 |
+| 真实终止并重启 API 进程 | 0 | 同一 run_id/approval_id/参数；私有 model_resume_state 摘要完全相同 |
+| UI 批准后 | 1 | COMPLETED；5 次模型、8 次工具，工具结果进入后续上下文 |
+| 12 次并发重复批准后 | 1 | replayed=true；步骤/事件数无第二次写入增长 |
+| 独立 Run 拒绝后 | 0 | CANCELLED / APPROVAL_REJECTED |
+| 完成后 POST resume | 1 | HTTP 409，不能恢复到 RUNNING |
+
+另外 pytest 的真实 HTTP 重启测试让 **首次批准本身**受到 12 个请求并发竞争，只有一个 replayed=false，草案仍为 1；原生 Storage 线程并发也有同样断言。浏览器脚本的 12 次请求是批准后的并发重放，二者不要混淆。
+
+事务失败测试实际在 INSERT/flush 后注入异常，回滚后审批仍待审、草案为 0。未知写结果/AFTER_APPROVED_TOOL 测试构造精确的数据库故障状态后重开 Storage，不冒充在任意执行指令处强杀。真实进程重启验收范围是 WAITING_APPROVAL。
+
+### 本次自动化测试名称（来自实际 JUnit）
+
+以下是新增 36 项的完整实际名称；包括参数化状态迁移实例。全量 143 项见 [test-names.txt](evidence/day3/test-names.txt)，机器记录见 [pytest.xml](evidence/day3/pytest.xml)。
+
+<details>
+<summary>展开 Day 3 测试名称</summary>
+
+```text
+tests.test_approval_api::test_api_rejects_bound_parameter_override_and_cross_run_approval
+tests.test_approval_api::test_api_rejection_is_audited_and_never_writes
+tests.test_approval_api::test_api_approve_continues_same_context_and_audits_exact_call
+tests.test_approval_api::test_budget_failure_is_persisted_with_zero_drafts
+tests.test_openai_adapter::test_encrypted_continuation_survives_sqlite_approval_checkpoint
+tests.test_persistence::test_unapproved_write_is_persisted_pending_with_zero_drafts
+tests.test_persistence::test_rejection_never_creates_draft
+tests.test_persistence::test_sequential_and_concurrent_approve_create_only_one_draft
+tests.test_persistence::test_conflicting_decision_is_rejected
+tests.test_persistence::test_waiting_checkpoint_survives_new_storage_instance_and_completes
+tests.test_persistence::test_pending_parameter_tampering_never_writes
+tests.test_persistence::test_write_and_decision_roll_back_together
+tests.test_persistence::test_unknown_write_outcome_requires_reconciliation_without_replay
+tests.test_persistence::test_confirmed_local_write_checkpoint_can_resume_without_repeating_write
+tests.test_persistence::test_terminal_run_is_never_resumed
+tests.test_persistence::test_draft_has_real_database_uniqueness_constraints
+tests.test_persistence::test_allowed_state_transitions[CREATED-RUNNING]
+tests.test_persistence::test_allowed_state_transitions[RUNNING-WAITING_APPROVAL]
+tests.test_persistence::test_allowed_state_transitions[WAITING_APPROVAL-RUNNING]
+tests.test_persistence::test_allowed_state_transitions[WAITING_APPROVAL-CANCELLED]
+tests.test_persistence::test_allowed_state_transitions[RUNNING-INTERRUPTED]
+tests.test_persistence::test_allowed_state_transitions[RUNNING-RECONCILIATION_REQUIRED]
+tests.test_persistence::test_allowed_state_transitions[INTERRUPTED-RUNNING]
+tests.test_persistence::test_allowed_state_transitions[RECONCILIATION_REQUIRED-FAILED]
+tests.test_persistence::test_forbidden_state_transitions[COMPLETED-RUNNING]
+tests.test_persistence::test_forbidden_state_transitions[FAILED-RUNNING]
+tests.test_persistence::test_forbidden_state_transitions[CANCELLED-RUNNING]
+tests.test_persistence::test_forbidden_state_transitions[CREATED-COMPLETED]
+tests.test_persistence::test_forbidden_state_transitions[WAITING_APPROVAL-COMPLETED]
+tests.test_persistence::test_forbidden_state_transitions[RECONCILIATION_REQUIRED-RUNNING]
+tests.test_persistence::test_corrupted_waiting_checkpoint_fails_closed_on_startup
+tests.test_persistence::test_trace_redacts_secrets_and_pii_without_mangling_digest
+tests.test_persistence::test_trace_tables_store_redacted_summaries_not_private_tool_data
+tests.test_persistence::test_resume_cannot_replace_frozen_configuration
+tests.test_persistence::test_newer_schema_is_rejected_without_dropping_data
+tests.test_recovery_process::test_real_process_restart_restores_same_approval_context_and_one_draft
+```
+
+</details>
+
+### 证据索引
+
+| 路径（相对 docs） | 内容 |
+|---|---|
+| evidence/day3/pytest.txt / pytest.xml / test-names.txt | 最终原始输出、机器结果、实际测试名称 |
+| evidence/day3/baseline-pytest.txt | 改实现前 107 项基线 |
+| evidence/day3/initial-persistence-failure.txt | storage 未实现时四项需求先失败：4 failed in 1.22s |
+| evidence/day3/checkpoint-redaction-failure.txt | 损坏 checkpoint 与摘要误脱敏的失败复现：2 failed, 26 passed in 9.37s |
+| evidence/day3/ruff-check.txt / ruff-format.txt / web-build.txt | 静态检查、格式与前端构建输出 |
+| evidence/day3/database-assertions.json | 真实 SQL 行数、相同私有上下文摘要、实际 ID |
+| evidence/day3/waiting-approval.png / approved-trace.png / failure-trace.png | 实际浏览器截图，已查看核对 |
+| evidence/day3/persisted-run.json / persisted-steps.json / persisted-events.json / persisted-approval.json | 实际 HTTP 脱敏持久化快照 |
+| evidence/day3/curl-create.json / curl-query.json / curl-approval-replay.json | 真实 curl 创建/查询/决议幂等重放 |
+| evidence/day3/openapi.json / health.json / environment.txt | 生成规范、SQLite/协议健康状态、实际安装版本 |
+| evidence/day3/api-before-restart.log / api-after-restart.log / web.log / summary.json | 两个 API 进程与 Web 日志、断言结束后的摘要 |
+
+初次浏览器验证遇到用户服务占用 5173；改用临时端口。随后 Windows 固定重启端口的预探测 bind 遇 TIME_WAIT；移除该预探测，由 Uvicorn 实际绑定，最终统一验证成功。没有停止已有用户服务，未伪造 SDK 返回。
+
+### 恢复边界与剩余事项
+
+能恢复：WAITING_APPROVAL；以及验证过草案/决议/结果凭据的 AFTER_APPROVED_TOOL。不能恢复：进行中的模型/读工具、任意指令位置、未知外部副作用。未知写结果进入 RECONCILIATION_REQUIRED 不重发；终态不可再次 RUNNING。
+
+Live 外部 API **未测**。Responses SQLite 续传用明确合成 HTTP fixture 经官方 SDK 解析，不替代供应商在线验证。MCP 真实集成仍在全量测试中通过，兼容范围不扩大。
+
+SSE 未做，采用轮询；Docker/CI、独立 JSONL Evals/两批比较仍未做。scripts/verify_day2.py 仅适配新 preset 数量与临时 DB，本次没有重跑它覆盖 Day 2 历史证据。Day 1/2 旧证据与 PRD 保留。
+本次未提交/推送；候选人贡献与 Codex 编码角色分开表述。完整文件、API、五个问答与 P0 表见 [Day 3 交付](deliveries/2026-10-18-day3.md)。
+
+---
+
+
+
 ## 2026-10-17：Day 2 模型接入、MCP、API、Workbench
 
 执行前先运行 Day 1 `pytest -q`，原 70 项通过。SDK 安装要求升级 Pydantic 2.11.7→2.14.1；升级后再次对原两个测试文件单独回归，仍为 70 项通过。

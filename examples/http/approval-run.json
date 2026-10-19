@@ -1,0 +1,6 @@
+{
+  "agent_id": "purchase-demo",
+  "mode": "mock",
+  "input": "Compare synthetic quotations and create a local draft only after explicit approval.",
+  "mock_scenario": "purchase"
+}

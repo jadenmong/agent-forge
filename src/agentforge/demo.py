@@ -18,7 +18,7 @@ from .models import (
     ToolCall,
 )
 from .runtime import RuntimeEngine
-from .tools import ToolDefinition, ToolRegistry
+from .tools import Permission, RuntimeFault, ToolDefinition, ToolRegistry
 
 FIXTURE_PATH = (
     Path(__file__).resolve().parents[2] / "examples/procurement/fixtures.json"
@@ -68,6 +68,24 @@ class ProcurementFixture(StrictModel):
         return self
 
 
+class PurchaseDraftArgs(CostArgs):
+    supplier: Literal["A", "B", "C"]
+    budget_cents: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def demo_policy(self):
+        fixture = load_fixtures()
+        quote = next(s for s in fixture.suppliers if s.supplier == self.supplier)
+        if quote.unit_price_cents != self.unit_price_cents:
+            raise RuntimeFault("DEMO_QUOTE_CHANGED")
+        if (
+            self.budget_cents > fixture.budget_cents
+            or self.quantity * self.unit_price_cents > self.budget_cents
+        ):
+            raise RuntimeFault("DEMO_BUDGET_EXCEEDED")
+        return self
+
+
 def load_fixtures() -> ProcurementFixture:
     # Fixed project-owned path; neither the task nor model can choose a file.
     return ProcurementFixture.model_validate_json(
@@ -91,13 +109,15 @@ async def calculate_cost(args: CostArgs):
     return {"total_cents": args.unit_price_cents * args.quantity}
 
 
-def demo_registry(*, simulate_tool_error: bool = False) -> ToolRegistry:
+def demo_registry(
+    *, simulate_tool_error: bool = False, include_purchase: bool = False
+) -> ToolRegistry:
     async def detail(args):
         if simulate_tool_error:
             raise RuntimeError("Synthetic demo tool failure")
         return await supplier_detail(args)
 
-    return ToolRegistry(
+    registry = ToolRegistry(
         (
             ToolDefinition(
                 "list_supplier_quotes",
@@ -119,6 +139,18 @@ def demo_registry(*, simulate_tool_error: bool = False) -> ToolRegistry:
             ),
         )
     )
+    if include_purchase:
+        # The approval transaction is the only executor for this built-in DB operation.
+        registry.add(
+            ToolDefinition(
+                "create_purchase_draft",
+                "Create one local demo draft only after explicit approval; never places an order.",
+                PurchaseDraftArgs,
+                None,
+                Permission.REQUIRES_APPROVAL,
+            )
+        )
+    return registry
 
 
 def demo_adapter(scenario: str = "procurement") -> DeterministicMockAdapter:
@@ -148,6 +180,29 @@ def demo_adapter(scenario: str = "procurement") -> DeterministicMockAdapter:
         )
     if scenario == "tool-error":
         return DeterministicMockAdapter((ModelReply(calls=(detail,)),))
+    if scenario in {"purchase", "budget-low"}:
+        fixture = load_fixtures()
+        quote = next(s for s in fixture.suppliers if s.supplier == "B")
+        read = demo_adapter("procurement").replies[:3]
+        write = ToolCall(
+            call_id="purchase-draft",
+            tool_name="create_purchase_draft",
+            arguments={
+                "supplier": "B",
+                "unit_price_cents": quote.unit_price_cents,
+                "quantity": fixture.quantity,
+                "budget_cents": fixture.budget_cents if scenario == "purchase" else 100,
+            },
+        )
+        return DeterministicMockAdapter(
+            (
+                *read,
+                ModelReply(calls=(write,)),
+                ModelReply(
+                    final_text="[Mock] Approved local draft created; no real order was placed."
+                ),
+            )
+        )
     if scenario != "procurement":
         raise ValueError("Unknown mock scenario")
     fixture = load_fixtures()
@@ -208,7 +263,12 @@ def main():
             config=config,
         )
     )
-    print(json.dumps(asdict(run), ensure_ascii=False, indent=2))
+    public = {
+        key: value
+        for key, value in asdict(run).items()
+        if key not in {"model_resume_state", "config_snapshot", "invocations"}
+    }
+    print(json.dumps(public, ensure_ascii=False, indent=2))
     return 0 if run.status == "COMPLETED" else 1
 
 

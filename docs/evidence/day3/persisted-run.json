@@ -1,0 +1,22 @@
+{
+  "data": {
+    "run_id": "8c609121-304d-44e0-bdab-215ebd782275",
+    "agent_id": "purchase-demo",
+    "mode": "mock",
+    "status": "COMPLETED",
+    "stop_reason": "FINAL_ANSWER",
+    "step_count": 5,
+    "model_call_count": 5,
+    "tool_call_count": 8,
+    "budget_tokens": 15881,
+    "token_accounting": "utf8_bytes_estimate",
+    "cost": null,
+    "output": "[Mock] Approved local draft created; no real order was placed.",
+    "input_summary": "比较 A/B/C 供应商报价、交期和保修。仅查询模拟数据。",
+    "started_at": "2026-10-19T01:22:00.743267+00:00",
+    "finished_at": "2026-10-19T01:22:06.667702+00:00",
+    "active_seconds": 0.4379999999999882,
+    "approval_wait_seconds": 5.424683
+  },
+  "request_id": "8b8123ce-7432-43e1-829c-09b0ed70ed93"
+}

@@ -1,4 +1,39 @@
-# 架构：Day 2（2026-10-17）
+# 架构：Day 3（2026-10-18）
+
+```mermaid
+flowchart TD
+  Web[React Workbench / 审批 / Trace] -->|公开 HTTP JSON 轮询| API[FastAPI]
+  Other[curl / Java TS Go HTTP 客户端] --> API
+  API --> Service[RunService / 单进程任务生命周期]
+  Service --> Engine[自研 RuntimeEngine / 显式状态迁移]
+  Engine --> Models[Mock / Responses 官方 HTTP SDK]
+  Engine --> Registry[ToolRegistry / allowlist / Schema / 超时]
+  Registry --> Read[本地只读工具 / MCP Client]
+  Engine -->|写调用只暂停| Store[Storage / Checkpoint / 事件]
+  Service -->|具体 ID 决议| Policy[Storage.decide / 后端权限检查]
+  Policy -->|同一事务| Draft[内置模拟草案 INSERT]
+  Draft --> DB[(SQLite WAL / schema v1)]
+  Store --> DB
+  DB -->|持久化 Trace / 审计查询| API
+```
+
+上图是源码结构示意。真实运行截图与 SQL 证据在 [day3](evidence/day3/summary.json)；外部 Live 未测。
+
+主要路径：
+
+1. `api.create_app` 启动 → `Storage.initialize/recover` → MCP 真实发现 → 读取/补齐 Agent presets。
+2. `POST runs` → `RunService.start` 先存 Run → 保持强引用的后台 task → `RuntimeEngine.run`。
+3. 模型结果整批校验 → 只读调用 `Registry.dispatch`；需审批调用 `Storage.pause`，原子存 pending/approval/WAITING_APPROVAL，结束当前 task。
+4. `POST approve` → `RunService.decide` → `Storage.decide` 校验绑定/权限，批准则在同事务写草案、结果与安全 checkpoint；拒绝无写入；只有首次批准调度继续模型。
+5. 重启 → waiting 验证原审批及上下文；已批准安全点需 `claim_resume` 验证真实草案凭据；未知写结果转待核对。终态无恢复入口。
+6. `GET runs/steps/events/approvals` 从 DB 查询；RunView 过滤私有字段，摘要与事件脱敏；UI 轮询显示历史、参数/结果和异常。
+
+模块入口：storage.py（ORM/事务/唯一约束/恢复）、service.py（任务归属/适配器重建）、runtime.py（循环与状态）、redaction.py（公开摘要）、tools.py（统一策略）。
+schema 中 runs 同时存 frozen config、private model_resume_state 和 revision；steps/events/invocations/approvals 各有数据库实体；草案只有受政策层控制的原生事务写入，没有通用敏感 handler 执行器。
+
+**边界**：单 worker、本机 SQLite、可信异步工具；恢复矩阵见 DECISIONS D014。没有分布式队列、任意外部事务或任意中断点恢复，私有 DB 不是加密存储。成本 unknown，时间来自实际执行，不提供虚构基准。
+
+## 以下保留 Day 2 架构记录（2026-10-17）
 
 ```mermaid
 flowchart TD

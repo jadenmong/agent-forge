@@ -1,5 +1,29 @@
 # 故障与边界证据
 
+## Day 3（2026-10-18）失败复现、恢复与范围
+
+| 故障/风险 | 行为与验证 | 证据 |
+|---|---|---|
+| 模块未实现时先跑持久化需求测试 | 保存实际失败输出，再补 SQLite/审批/恢复实现 | evidence/day3/initial-persistence-failure.txt |
+| 待审 checkpoint 损坏导致启动报错 | 先复现；修为单 Run FAILED / CHECKPOINT_INVALID，不执行、不拖垮其他任务 | checkpoint-redaction-failure.txt；test_corrupted_waiting_checkpoint_fails_closed_on_startup |
+| 手机号正则误伤 SHA-256 中数字段 | 增加边界；摘要保持不变，Key/Bearer/PII 仍遮盖 | checkpoint-redaction-failure.txt；test_trace_redacts_secrets_and_pii_without_mangling_digest |
+| 参数替换或跨 Run 审批 | JSON extra=forbid；从 DB 绑定读取，哈希/上下文/权限再次校验 | test_api_rejects_bound_parameter_override_and_cross_run_approval；test_pending_parameter_tampering_never_writes |
+| INSERT 后、事务提交前异常 | 注入实际 flush 后异常，SQL 查询草案 0、审批仍 PENDING；可安全重试 | test_write_and_decision_roll_back_together |
+| 并发首次批准/重复批准 | 原生线程和真实 HTTP 请求竞争，只有一次首次决议和一条草案 | test_sequential_and_concurrent_approve_create_only_one_draft；test_real_process_restart_restores_same_approval_context_and_one_draft |
+| 暂停 task 的旧快照或清理回调覆盖新恢复任务 | WAITING_APPROVAL 已原子保存，不在 finally 再写；revision 拒绝旧版本；回调比对 task 身份 | runtime.py / service.py；上述并发与 API 继续测试 |
+| 正在执行的写调用完成情况未知 | 构造持久化 RUNNING 写 invocation，重开 Storage 执行启动恢复，转 RECONCILIATION_REQUIRED，拒绝 resume，无第二次写入 | test_unknown_write_outcome_requires_reconciliation_without_replay |
+| 已提交草案后进程未能继续模型 | 从真实提交的 AFTER_APPROVED_TOOL checkpoint 重开 Store，核对草案凭据再 resume，草案仍 1 | test_confirmed_local_write_checkpoint_can_resume_without_repeating_write |
+| 终态恢复/替换配置 | 状态迁移拒绝；resume 409 或 CHECKPOINT_INVALID | test_terminal_run_is_never_resumed；test_resume_cannot_replace_frozen_configuration |
+| 预算不足 | 参数模型拒绝，不创建审批或草案；Trace 显示 DEMO_BUDGET_EXCEEDED | test_budget_failure_is_persisted_with_zero_drafts；failure-trace.png |
+| 本机 5173 被已有服务占用 | 验证器改用临时端口，Vite 支持限定 localhost API 端口；不结束用户服务 | scripts/verify_day3.py；web.log |
+| Windows 重启同端口预探测遇 TIME_WAIT | 测试 helper 不再提前 bind 固定重启端口，实际服务负责绑定 | tests/test_recovery_process.py；真实浏览器重启验收通过 |
+
+明确区分：**WAITING_APPROVAL 是真实 API 进程终止/重启测试**；未知写结果与“事务提交后模型前”是精确构造的数据库故障状态及存储重开测试，不冒充在任意机器指令处强杀成功。当前内置草案与决议同库事务，没有连接真实 ERP。数据库文件损坏、磁盘丢失、DB 管理员恶意改写和跨节点容灾不在保证内。
+
+原始最终结果为 [pytest.txt](evidence/day3/pytest.txt)，完整测试名称为 [test-names.txt](evidence/day3/test-names.txt)。公开 Trace 不返回私有上下文；私有 SQLite 仍含精确 Demo 输入，不是加密保险箱或通用 DLP。Live 外部 API 未测，续传测试使用明确的合成 HTTP fixture。
+
+恢复能力仅按 [DECISIONS D014](DECISIONS.md) 声明；模型/只读调用中断不可继续、未知写入不补发。没有 arbitrary tool exactly-once 声明。
+
 ## Day 2（2026-10-17）真实发现与回归
 
 | 故障 | 发现/修复 | 证据 |

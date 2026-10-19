@@ -1,9 +1,29 @@
-# P0 事实矩阵 — 2026-10-17 Day 2
+# P0 事实矩阵 — 2026-10-18 Day 3
 
 PASS = 本条限定范围有可运行断言；PARTIAL = 只实现部分；NOT_TESTED = 尚无实现/未执行，不能视为通过；FAIL = 已验证不满足。
-当前全量测试为 107 项，原 Day 1 套件为 70 项。当前证据为 `evidence/day2/`；下面 Day 1 表格保留原验收范围与证据，不用后续成果倒填历史。
+当前全量测试为 **143 项、143 通过、0 失败**，Day 3 前基线为 107 项。当前证据为 `evidence/day3/`；下面 Day 1/2 交付表格保留原验收范围与证据，不用后续成果倒填历史。
 
-## Day 2 交付清单
+## Day 3 交付与数据库不变量
+
+| 要求 | 结果 | 测试/实际证据 |
+|---|---|---|
+| 先跑原 Day 2 测试 | PASS | day3/baseline-pytest.txt：107 passed |
+| SQLite/SQLAlchemy 持久化 Run/Step/Event/Invocation/Approval/model_resume_state | PASS | storage.py；test_draft_has_real_database_uniqueness_constraints；day3/environment.txt；SQLite schema v1 自动初始化 |
+| 状态机、绑定参数审批、后端权限 | PASS | test_allowed_state_transitions / test_forbidden_state_transitions；test_api_rejects_bound_parameter_override_and_cross_run_approval |
+| 未批准草案 0 | PASS | test_unapproved_write_is_persisted_pending_with_zero_drafts；database-assertions.json：before_approval.purchase_drafts=0 |
+| 拒绝后草案 0 | PASS | test_rejection_never_creates_draft / test_api_rejection_is_audited_and_never_writes；database-assertions.json：rejected_run=0 |
+| 批准后草案 1，重复/并发仍 1 | PASS | 两类真实 DB 并发测试；真实 HTTP 首次并发批准；database-assertions.json：after_approve=1、after_12_concurrent_replays=1 |
+| 真实 API 进程重启，ID/任务上下文不变 | PASS | test_real_process_restart_restores_same_approval_context_and_one_draft；verify_day3.py 第二次浏览器验收；database-assertions.json 相同私有状态摘要 |
+| 已批准安全点可恢复；未知写结果不重发 | PASS | test_confirmed_local_write_checkpoint_can_resume_without_repeating_write；test_unknown_write_outcome_requires_reconciliation_without_replay；这些为构造 DB 故障状态，不是任意点强杀 |
+| 终态不恢复 RUNNING | PASS | test_terminal_run_is_never_resumed；真实 HTTP resume=409 |
+| UI 审批/拒绝、Trace 参数结果/异常/审批/Checkpoint | PASS | day3/waiting-approval.png、approved-trace.png、failure-trace.png；summary.json |
+| Trace 脱敏、私有上下文不经 API 返回 | PASS | test_trace_tables_store_redacted_summaries_not_private_tool_data；test_trace_redacts_secrets_and_pii_without_mangling_digest；仅已知字段规则 |
+| OpenAPI 与 curl 创建/查询/批准重放 | PASS | day3/openapi.json、curl-create.json、curl-query.json、curl-approval-replay.json |
+| 全量回归、格式、前端构建 | PASS | day3/pytest.txt：143 passed；ruff-check.txt、ruff-format.txt、web-build.txt |
+
+以上 PASS 限于表中定义的本机 Mock/合成数据路径；不是对任意恢复位置、外部 Live 或生产安全的通过声明。
+
+## Day 2 历史交付清单
 
 | 要求 | 源码/测试 | 结果 | 证据及边界 |
 |---|---|---|---|
@@ -35,14 +55,14 @@ PASS = 本条限定范围有可运行断言；PARTIAL = 只实现部分；NOT_TE
 | PRD | 能力 | 源码/测试 | 结果 | 演示/限制及证据 |
 |---|---|---|---|---|
 | §1.2.1 | Agent Studio | models.AgentConfig/Limits、api.py、apps/web/src/main.tsx | PARTIAL | 配置 API/UI 与 Mock 已实测，Live 适配器实现但外部 API 未测；day2/workbench.png |
-| §1.2.2 | 自研 Loop、零/一/多调用、连续调用、顺序、终止 | runtime.py / models.py；test_zero_tool_final_answer、test_serial_tools_return_results_before_next_model_call、test_demo_multi_tool_and_continuation、test_limits_terminate | PASS | `python -m agentforge.demo`；day1-completion/demo.json；Mock 内存运行 |
-| §1.2.3 | Tool Registry、Schema、权限、超时、错误、≥3 本地工具 | tools.py / demo.py；test_schema_matches_strict_validation、test_invalid_args_never_execute、test_policy_blocks_side_effects、test_tool_failures | PASS | CLI 调用三个只读工具；需审批工具当前全部阻断，非审批执行能力 |
+| §1.2.2 | 自研 Loop、零/一/多调用、连续调用、顺序、终止 | runtime.py / models.py；test_zero_tool_final_answer、test_serial_tools_return_results_before_next_model_call、test_demo_multi_tool_and_continuation、test_limits_terminate | PASS | CLI 保留内存运行；HTTP 已持久化并跨审批继续；day3/pytest.txt |
+| §1.2.3 | Tool Registry、Schema、权限、超时、错误、≥3 本地工具 | tools.py / demo.py / storage.py；test_schema_matches_strict_validation、test_invalid_args_never_execute、test_policy_blocks_side_effects、test_tool_failures | PASS | 三个本地只读、两个 MCP 只读、一个需审批工具；普通 dispatch 不放行敏感工具 |
 | §1.2.4 | MCP Adapter 与官方 SDK 实际调用 | mcp_server.py / mcp_adapter.py / test_mcp_adapter.py | PASS | SDK 2.3.0 / 2026-07-28 / stdio 工具发现调用实测；day2/health.json、pytest.txt |
-| §1.2.5 | Checkpoint/Recovery | 无 | NOT_TESTED | Run/事件仅内存，无安全点恢复 |
-| §1.2.6 | Human Approval + 幂等草案 | 无；test_policy_blocks_side_effects 仅验证阻断 | NOT_TESTED | 没有审批 ID、决议或写入路径 |
-| §1.2.7 | Trace Studio | runtime.RunState.emit / models.RunStep / api.py / Workbench | PARTIAL | API 可查询事件，UI 有真实步骤；day2/workbench.png；无完整历史 UI/参数结果详情/持久化 |
+| §1.2.5 | Checkpoint/Recovery | storage.py / service.py；test_real_process_restart_restores_same_approval_context_and_one_draft | PASS | day3/database-assertions.json；仅 WAITING_APPROVAL 与验证过的 AFTER_APPROVED_TOOL，恢复矩阵见 DECISIONS |
+| §1.2.6 | Human Approval + 幂等草案 | Storage.decide / Approval API/UI / tests | PASS | day3/waiting-approval.png、database-assertions.json；仅本地同库事务副作用 |
+| §1.2.7 | Trace Studio | 持久化 steps/events / redaction.py / Workbench | PASS | day3/approved-trace.png、failure-trace.png；历史、参数/结果摘要、异常/审批/checkpoint；成本 unknown、token 明确估计来源 |
 | §1.2.8 | Evals | 只有 pytest 回归 | NOT_TESTED | 无 JSONL、指标/两批比较或 Live 质量结果 |
-| §1.2.9 | 安全护栏 | tools.py / runtime.py；test_policy_blocks_side_effects、test_events_exclude_sensitive_input_arguments_results_and_final、test_untrusted_injection_cannot_change_policy、test_limits_terminate | PARTIAL | 默认空 allowlist、只读与限流通过；未完成审批/恢复与 Live 护栏，不声称通用安全 |
+| §1.2.9 | 安全护栏 | tools.py / runtime.py / storage.py / redaction.py；权限、预算、审批及脱敏测试 | PARTIAL | 本机 Mock 安全路径已测；Live 外部护栏未在线测，脱敏非通用 DLP，无生产安全声明 |
 | §1.2.10 | API、OpenAPI、curl、部署文档 | api.py / README / API_CONTRACT | PARTIAL | HTTP/OpenAPI/curl/两个开发命令实测；day2/openapi.json、curl-run.json；Compose 仍待 Day 4 |
 
 ## 首日里程碑与最终硬门槛
@@ -50,18 +70,18 @@ PASS = 本条限定范围有可运行断言；PARTIAL = 只实现部分；NOT_TE
 | 验收项 | 结果 | 证据 |
 |---|---|---|
 | §10 首日 Runner/Registry/状态机/单测 | PASS | runtime.py、tools.py、70 个测试；day1-completion/pytest.txt |
-| pytest 全绿 | PASS | day2/pytest.txt：107 passed；day1-regression.txt：原 70 项 |
-| 未批准写入 0（当前无批准路径） | PASS | test_policy_blocks_side_effects；副作用断言为空，仅限当前阻断策略 |
-| 拒绝后写入 0 | NOT_TESTED | 拒绝协议未实现 |
-| 重复批准最多写入 1 | NOT_TESTED | 审批与数据库幂等未实现 |
-| 完整采购 Mock Demo：审批→恢复→结果 | PARTIAL | day1-completion/demo.json 仅只读比较；无审批恢复 |
-| 中断/进程重启恢复 | NOT_TESTED | 无持久化 |
+| pytest 全绿 | PASS | day3/pytest.txt：143 passed；测试名称在 day3/test-names.txt |
+| 未批准写入 0 | PASS | 原生 SQLite COUNT=0；day3/database-assertions.json |
+| 拒绝后写入 0 | PASS | SQLite COUNT=0；拒绝审计/界面已测 |
+| 重复批准最多写入 1 | PASS | 首次并发批准与后续重复批准均有 SQL 断言 |
+| 完整采购 Mock Demo：审批→恢复→结果 | PASS | day3/approved-trace.png；5 模型/8 工具，真实合成工具执行 |
+| 中断/进程重启恢复 | PASS | 明确等待点的真实 API 重启；其他边界按恢复矩阵拒绝 |
 | 无明文 Key | PARTIAL | 首日不配置/使用 Key；尚未建立专门 secret scan gate |
 | README Mock 命令有效 | PASS | scripts/verify_day1.py；day1-completion/smoke.txt / environment.txt |
-| Trace 显示真实事件 | PARTIAL | API events 与真实 UI 步骤；day2/workbench.png；尚无完整 Trace Studio |
+| Trace 显示真实事件 | PASS | day3/persisted-events.json、approved-trace.png、failure-trace.png |
 | UI E2E happy path | PASS | verify_day2.py；day2/summary.json、workbench.png、workbench-mcp.png |
 | OpenAPI 可获取、curl 创建/查询 | PASS | day2/openapi.json、curl-create.json、curl-run.json、curl-steps.json |
-| 30–50 条有来源评测/故障集 | PARTIAL | 70 个 pytest 实例来源为手工构造，缺审批/MCP/重启类和独立 JSONL 评测，不替代最终评测集 |
+| 30–50 条有来源评测/故障集 | PARTIAL | 143 项手工构造 pytest 回归覆盖审批/MCP/重启，但没有独立 JSONL 评测与两批比较，不替代最终评测集 |
 | Live 真实模型 | NOT_TESTED | 适配器已实现，外部 API 无 Key 未运行；离线 fixture 不替代 Live |
 
-Day 1 清单与 Day 2 的 Mock/MCP/API/UI 核心路径已通过；Live 外部 API 未测，最终平台 P0 **未全部通过**。持久化、审批恢复、幂等写入、Evals 和 Docker 仍待后续交付。
+Day 3 明确范围的持久化、审批恢复、幂等本地草案与 Trace 已通过；最终平台 P0 **未全部通过**。Evals/JSONL/两批比较和 Docker/CI 仍待交付，外部 Live 未测；SSE 是 P1，当前轮询满足本次验收。

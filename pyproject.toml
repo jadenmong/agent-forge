@@ -15,6 +15,7 @@ dependencies = [
     "uvicorn==0.54.0",
     "httpx==0.28.1",
     "jsonschema==4.26.0",
+    "SQLAlchemy==2.0.55",
 ]
 
 [project.optional-dependencies]

@@ -1,6 +1,6 @@
 # 设计决策
 
-> 当前最新为文末 D008–D011（Day 2，2026-10-17）。前面各节保留对应日期的历史范围，不能把其中“尚未实现”当作最新状态；当前验收见 FEATURE_MATRIX。
+> 当前最新为文末 D012–D015（Day 3，2026-10-18）。前面各节保留对应日期的历史范围，不能把其中“尚未实现”当作最新状态；当前验收见 FEATURE_MATRIX。
 
 ## D001 — 2026-10-14：按当日里程碑实现
 
@@ -96,3 +96,51 @@ Run 使用 asyncio.create_task 并保留强引用，正常关闭时取消；进�
 POST 创建不提供请求级幂等，重复请求产生独立只读资源；容量满 409，具体契约见 API_CONTRACT。写工具仍未开放，审批/持久化/幂等属于 Day 3。
 Live Key 永不传给浏览器；模式与 Mock 标签明确。成本缺价格为 unknown，不伪造 usage、延迟或质量指标。UI 显示步骤元数据，暂不实现完整历史 Trace/参数详情。
 采用两个开发命令交付；Docker 按 Day 2 允许的替代方案留待 Day 4。Playwright 使用实际浏览器完成创建 Agent、本地两工具、MCP 两工具与缺 Key 错误路径，并保存真实截图。
+
+## D012 — 2026-10-18：SQLite 是本机事实来源，任务仍属于一个进程
+
+新增 storage.py，用 SQLAlchemy 2.0.55 ORM 定义七张表：agents、runs、run_steps、run_events、tool_invocations、approvals、purchase_drafts；模型续传状态是 runs.model_resume_state JSON 列，不另建表。Run 保存冻结的 Agent 配置，避免恢复时读取被替换的提示词/权限；Mock 同时保存原脚本，不从变化后的 fixture 重新生成。
+
+SQLite WAL 允许读者与短写事务共存；外键开启，busy_timeout=5000。所有写事务 BEGIN IMMEDIATE，Run revision 拒绝陈旧快照覆盖。step/event 使用 (run_id,seq)/(run_id,event_id) 主键，event 追加不改旧记录；调用使用 (run_id,call_id)，审批另有唯一绑定。同步 DB 调用会短暂占用 API 事件循环，适合本机低并发 Demo，不是吞吐设计。
+
+启动 initialize：空库 user_version=0 → 建表/v1；已是 v1 则幂等初始化；其他版本拒绝，保留数据。不引入 Alembic，因为之前没有持久化 schema；下一次真正改变 schema 时才实现明确升级步骤。不会自动修复手工篡改或任意损坏的 SQLite 文件。
+
+替代方案：只存一份 Run JSON 更短，但不便数据库唯一约束、审批/草案关联查询；生产数据库/队列会扩大范围，本次不采用。RunService 只管理本进程 asyncio task，启动必须单 worker；另开服务共享同一数据库不属于支持范围。
+
+官方依据：[SQLAlchemy SQLite](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html)、[ORM](https://docs.sqlalchemy.org/en/20/orm/quickstart.html)。实际锁定环境和 SQL 断言见 evidence/day3/environment.txt、database-assertions.json。
+
+## D013 — 审批属于后端政策事务，绑定调用而非放开工具
+
+Runtime 整批预检后，REQUIRES_APPROVAL 调用先写 pending invocation、具体参数、审批及 WAITING_APPROVAL checkpoint。普通 Registry.dispatch 始终拒绝该权限；不存在通用的 approved=true 参数绕开入口。
+
+批准接口只接受 approval_id/decision，服务端从数据库取绑定的 run_id/call_id/tool_name/validated_args，核对 SHA-256、冻结 allowlist、当前严格参数模型、调用次数和预算，再执行唯一内置写操作。SHA-256 不是密钥签名，不能防住拥有数据库改写权限的攻击者；本项目无 OAuth/用户认证。
+
+选择把 create_purchase_draft 的 INSERT 放在审批决议同一事务中，连同结果上下文和 AFTER_APPROVED_TOOL checkpoint 原子提交。approval_id、idempotency_key、(run_id,call_id) 分别唯一。金额用整数分，当前价格/预算再校验；失败回滚决议和草案。重复同决议返回 replayed=true；相反决议 409。首次决议 request_id 持久化，事件只记一次实际决议；没有逐次重复 HTTP 请求的独立访问审计表。
+
+这是一条刻意狭窄的内置本地写通道，不提供通用事务型外部 Tool handler。外部 HTTP/ERP 与本地 SQLite 不能原子提交，不能从这个例子推出任意工具 exactly-once。不同 Run 有不同幂等键，也不会对任意业务相似任务去重。
+
+## D014 — 恢复矩阵优先于“从哪里都能继续”的承诺
+
+状态迁移由 RunState.transition 显式约束：CREATED → RUNNING/FAILED/CANCELLED；RUNNING → WAITING_APPROVAL/COMPLETED/FAILED/CANCELLED/INTERRUPTED/RECONCILIATION_REQUIRED；WAITING_APPROVAL → RUNNING/CANCELLED/FAILED；INTERRUPTED → RUNNING/FAILED/CANCELLED；RECONCILIATION_REQUIRED → FAILED；终态没有出边。列在状态机里的边不代表都有公开控制 API。
+
+| 断点 | 支持范围 |
+|---|---|
+| WAITING_APPROVAL | 校验原上下文/配置、pending queue、invocation、approval 参数绑定；重启保留原 ID，继续审批 |
+| AFTER_APPROVED_TOOL | 若重启发现 RUNNING，先记 INTERRUPTED；仅在数据库草案凭据、已批准决议、已完成调用、上下文结果一致时显式 resume |
+| 模型/只读工具 IN_FLIGHT 或 AFTER_READ_TOOL | 记录 INTERRUPTED；本次不自动或手动继续；可从头新建任务 |
+| 高风险调用 RUNNING、结果未知 | RECONCILIATION_REQUIRED / WRITE_OUTCOME_UNKNOWN；禁止补发，本次无自动核对实现 |
+| 终态或损坏 checkpoint | 终态保持；损坏待审任务 FAILED / CHECKPOINT_INVALID，服务可继续启动 |
+
+持久化包含中立 context、pending_calls、适配器描述和 safe_point；OpenAI 仅保存协议所需不透明 encrypted_content，无隐藏推理原文。恢复要求环境仍配置同一模型，缺 Key 明确失败；SDK 离线续传测试不代表 Live 重启已在线验证。Mock 可跨进程完整演示。
+
+模型/工具 I/O 前保存 IN_FLIGHT；批次恢复用 pending queue，不重复请求已经产生的函数调用。读工具结果完成虽持久化，本次尚未开放该恢复点，避免宣称任意位置一致性。人工等待不消耗活动 wall_seconds；审批等待时间单独计数。进程正常关闭会取消活动任务，已返回的 WAITING_APPROVAL 不受取消；崩溃由下次启动检测。
+
+曾修复暂停后的 finally 再保存旧快照可能覆盖决议的问题：等待点已在事务中保存，不再二次写；revision 仍兜底。任务完成回调只移除自己持有的 task，防止旧任务删掉新的恢复任务。
+
+## D015 — Trace、脱敏与证据不替代私有恢复状态
+
+RunView 用明确字段过滤，API 不返回 model_resume_state/config_snapshot。模型/调用上下文及 exact demo 参数是恢复所需的私有数据库内容，不能把“脱敏 Trace”说成数据库完全没有原文。API Key 不进入配置快照，数据库文件及 WAL 已被忽略；仅适合合成数据，没有数据库加密或通用 DLP。
+
+redaction.py 对已知秘密字段、Bearer、Key、邮箱和手机号脱敏；工具参数/结果摘要只放行 Demo 业务字段，未知内容遮盖。事件再次脱敏后入库。摘要用于定位问题；不是可拿来重放模型的完整上下文。修复过手机号规则误伤十六进制摘要中的数字段，加入单词边界并用测试约束。
+
+UI 轮询历史、Run/steps/events 和待审批列表；失败步骤和事件可筛选。SSE 属于 P1，本次不扩展。浏览器/SQL 验收用临时数据库和自动分配本机端口，真实结束/重启 API 进程；Windows 同端口重启交给 Uvicorn 绑定，不用预探测 socket 误判 TIME_WAIT。没有停止用户已有的 5173 服务。

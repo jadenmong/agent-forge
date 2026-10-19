@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "pytest_cases": 143,
+  "database_invariants": "0 before approval; 1 after approve and 12 concurrent replays; 0 for rejected Run",
+  "restart": "real API process stopped/restarted; same run_id, approval_id, parameters and private context digest",
+  "ui": "waiting approval, approved tool arguments/result, checkpoint/approval events, rejection and budget failure verified",
+  "live_external_api": "NOT_TESTED; verification subprocesses have no API key"
+}

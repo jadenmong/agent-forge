@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from playwright.sync_api import expect, sync_playwright
 
@@ -53,6 +54,8 @@ def main():
     sys.stdout.reconfigure(errors="backslashreplace")
     sys.stderr.reconfigure(errors="backslashreplace")
     EVIDENCE.mkdir(parents=True, exist_ok=True)
+    temporary = TemporaryDirectory(prefix="agentforge-day2-")
+    ENV["AGENTFORGE_DB_PATH"] = str(Path(temporary.name) / "demo.db")
     print(
         capture(
             "ruff-check.txt",
@@ -198,11 +201,11 @@ def main():
             )
             page = browser.new_page(viewport={"width": 1440, "height": 1100})
             page.goto("http://127.0.0.1:5173")
-            expect(page.get_by_label("选择 Agent").locator("option")).to_have_count(2)
+            expect(page.get_by_label("选择 Agent").locator("option")).to_have_count(3)
             page.get_by_text("创建 Agent", exact=True).click()
             page.get_by_label("Agent 名称").fill("Browser verified agent")
             page.get_by_role("button", name="保存 Agent").click()
-            expect(page.get_by_label("选择 Agent").locator("option")).to_have_count(3)
+            expect(page.get_by_label("选择 Agent").locator("option")).to_have_count(4)
             expect(
                 page.get_by_label("选择 Agent").locator("option:checked")
             ).to_have_text("Browser verified agent")
@@ -253,6 +256,7 @@ def main():
                 process.wait(timeout=5)
         for handle in handles:
             handle.close()
+        temporary.cleanup()
 
 
 if __name__ == "__main__":

@@ -1,4 +1,18 @@
-# 首日面试问答（2026-10-14）
+# AgentForge 面试问答
+
+## Day 3 五个追问（2026-10-18，当前状态）
+
+1. **为什么不能只让 prompt 写“必须审批”？** 模型输出是不可信请求。`RuntimeEngine.run` 先通过 Registry 校验，再对 REQUIRES_APPROVAL 调用执行 `Storage.pause`；普通 dispatch 永远不能执行写工具。approve 接口只收 ID 和决议，服务端再次检查冻结的权限、参数及预算。候选人应能沿 runtime → storage → service 读出这条路径。
+2. **两个人同时点批准会不会写两份？** 本机演示使用 `BEGIN IMMEDIATE` 串行化短写事务，事务内重新读决议；同决议重放返回 replayed。草案另有 approval_id、idempotency_key、(run_id,call_id) 唯一约束。数据库中决议、草案、结果、checkpoint 一起提交；真正并发 HTTP/数据库测试证明本例一份，没有声称外部 ERP exactly-once。
+3. **Checkpoint 究竟保存什么，重启能从哪里继续？** 保存配置快照、精确上下文、pending calls、Mock 原脚本/Live 模型描述及 safe_point。WAITING_APPROVAL 可保持原 ID 再批准；AFTER_APPROVED_TOOL 仅凭数据库草案与结果上下文校验后 resume。模型/读工具进行中不支持继续，未知写结果转 RECONCILIATION_REQUIRED；终态不能变 RUNNING。
+4. **为什么用 SQLite，不加队列或分布式锁？** 目标是本机单用户作品；WAL、短事务、唯一约束、revision 足够解释和验证。task 仍属于单个 asyncio 进程，不是可靠队列。同步 DB 会阻塞事件循环，5 秒 busy timeout 也有延迟代价；多进程 worker/生产吞吐不在范围内。schema v1 自动初始化，下一次真正改 schema 再写迁移。
+5. **怎样证明系统确实恢复过，Trace 又如何避免泄密？** `test_real_process_restart_restores_same_approval_context_and_one_draft` 实际停/启 Uvicorn，比较原 run_id/approval_id/任务上下文，并发批准后 SQL COUNT=1。浏览器脚本另有恢复截图与 database-assertions.json。公开 API 过滤私有模型状态，事件/摘要脱敏；精确上下文留在私有 DB，不声称全库无原文或通用 DLP。143 项是程序回归，外部 Live 未测。
+
+关键源码：[Loop](../src/agentforge/runtime.py)、[政策事务/恢复](../src/agentforge/storage.py)、[任务服务](../src/agentforge/service.py)、[API](../src/agentforge/api.py)、[脱敏](../src/agentforge/redaction.py)。
+证据：[RESULTS](RESULTS.md)、[SQL 断言](evidence/day3/database-assertions.json)、[Trace 截图](evidence/day3/approved-trace.png)。
+贡献表述：Codex 实现代码；候选人参与需求、取舍、审核、验收与讲解，不能将自动生成代码说成全部独立手写。
+
+## 以下为历史问答，按当时交付范围保留
 
 ## Day 2 五个追问（2026-10-17，当前状态）
 
