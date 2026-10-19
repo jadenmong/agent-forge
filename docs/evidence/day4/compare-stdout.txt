@@ -1,0 +1,1 @@
+{"mode": "mock", "baseline_id": "647f1735-02a7-40a5-b1f7-9cc192bf8a39", "candidate_id": "bcfc5181-db4a-48a5-99f7-8a8951e9456a", "regressions": [], "improvements": [], "unchanged": 42, "latency_note": "Observed timings only; not a statistically controlled performance benchmark."}

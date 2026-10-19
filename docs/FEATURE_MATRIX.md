@@ -1,9 +1,28 @@
-# P0 事实矩阵 — 2026-10-18 Day 3
+# P0 事实矩阵 — 2026-10-19 Day 4
 
 PASS = 本条限定范围有可运行断言；PARTIAL = 只实现部分；NOT_TESTED = 尚无实现/未执行，不能视为通过；FAIL = 已验证不满足。
-当前全量测试为 **143 项、143 通过、0 失败**，Day 3 前基线为 107 项。当前证据为 `evidence/day3/`；下面 Day 1/2 交付表格保留原验收范围与证据，不用后续成果倒填历史。
+Day 4 当前全量测试为 **155 项**，独立 JSONL 集为 **42 条**；分别统计，不将 pytest 项数当成 eval 样本数。当前证据为 `evidence/day4/`；下面各天交付表保留对应历史范围，不倒填历史。
 
-## Day 3 交付与数据库不变量
+## Day 4 交付清单
+
+| 要求 | 结果 | 证据与范围 |
+|---|---|---|
+| 先跑 Day 3 基线 | PASS | day4/baseline-pytest.txt：143 passed |
+| 30–50 条可追溯 JSONL EvalCase | PASS | examples/evals/mock.jsonl：42 条；来源、固定期望、工具/禁止工具/草案数、标签及判定版本齐全 |
+| 自研独立 runner、JSON/Markdown、失败门槛 | PASS | evals.py；day4/mock-a/report.json、report.md；故意错误期望与 CLI 非零退出测试 |
+| 恶意工具结果不能绕过写权限 | PASS | 两个 injection case 先真实读出恶意结果再提出写请求；无授权为 TOOL_FORBIDDEN，有授权仍 WAITING_APPROVAL，草案均为 0 |
+| Schema/未知工具/禁用/超时/错误/输出大小/模型终态/上限 | PASS | 42 条用例报告与原安全回归；非法 Schema 注册另有 test_malformed_tool_schema_is_rejected_before_handler_execution |
+| 批准/拒绝/重复与并发/跨进程恢复/未知写结果 | PASS | JSONL 对应 approval-*；两个 Runtime worker 恢复原上下文；原 Uvicorn 重启测试保留 |
+| 实际指标、Mock 与 Live 分开 | PASS | metrics.py / test_metrics.py；wall-clock、工具调用/错误率；Mock tokens/cost 为 unknown；合成 usage 另标 synthetic_mock_usage |
+| 两批比较 | PASS | day4/comparison.json：42 unchanged、0 regressions；数据集/模式/fixture/judge 不一致拒绝 |
+| 四页 UI 与 Playwright | PASS | day4/browser-summary.json；workbench.png、trace.png、approval.png、evals.png、comparison.png |
+| 新克隆候选环境 Quickstart | PASS | day4/clean-checkout/summary.json 和安装/pytest/build/eval/browser 原始日志；本机新 clone + 未提交候选覆盖、新 venv/npm ci，非公共 GitHub HEAD 或全新 OS |
+| CI 格式/pytest/Mock eval/构建/浏览器任一失败即 fail | PASS | .github/workflows/ci.yml 已配置，同类门槛本机实际执行；没有 Live secrets/continue-on-error |
+| 云端 GitHub Actions 运行 | NOT_TESTED | 本次未推送/触发工作流，不宣称远端 CI 已绿 |
+| Docker Compose | PARTIAL | Compose/镜像/nginx 已配置；docker-status.txt：环境无 Docker，容器运行 NOT_TESTED |
+| 外部 Live 质量评测 | NOT_TESTED | 未进行真实模型质量评测；Mock 成绩不代表模型任务质量 |
+
+## Day 3 历史交付与数据库不变量
 
 | 要求 | 结果 | 测试/实际证据 |
 |---|---|---|
@@ -61,16 +80,16 @@ PASS = 本条限定范围有可运行断言；PARTIAL = 只实现部分；NOT_TE
 | §1.2.5 | Checkpoint/Recovery | storage.py / service.py；test_real_process_restart_restores_same_approval_context_and_one_draft | PASS | day3/database-assertions.json；仅 WAITING_APPROVAL 与验证过的 AFTER_APPROVED_TOOL，恢复矩阵见 DECISIONS |
 | §1.2.6 | Human Approval + 幂等草案 | Storage.decide / Approval API/UI / tests | PASS | day3/waiting-approval.png、database-assertions.json；仅本地同库事务副作用 |
 | §1.2.7 | Trace Studio | 持久化 steps/events / redaction.py / Workbench | PASS | day3/approved-trace.png、failure-trace.png；历史、参数/结果摘要、异常/审批/checkpoint；成本 unknown、token 明确估计来源 |
-| §1.2.8 | Evals | 只有 pytest 回归 | NOT_TESTED | 无 JSONL、指标/两批比较或 Live 质量结果 |
+| §1.2.8 | Evals | evals.py / eval_service.py / Evals.tsx / tests | PASS | 42 条独立 JSONL Mock 回归、JSON/Markdown、指标与两批比较；day4/mock-a、mock-b、comparison.json；可选 Live 未运行 |
 | §1.2.9 | 安全护栏 | tools.py / runtime.py / storage.py / redaction.py；权限、预算、审批及脱敏测试 | PARTIAL | 本机 Mock 安全路径已测；Live 外部护栏未在线测，脱敏非通用 DLP，无生产安全声明 |
-| §1.2.10 | API、OpenAPI、curl、部署文档 | api.py / README / API_CONTRACT | PARTIAL | HTTP/OpenAPI/curl/两个开发命令实测；day2/openapi.json、curl-run.json；Compose 仍待 Day 4 |
+| §1.2.10 | API、OpenAPI、curl、部署文档 | api.py / README / API_CONTRACT / Compose | PARTIAL | API 0.4.0、curl/开发命令及新环境已测；day4/openapi.json、curl-query.json、clean-checkout；Compose 配置有、容器未测 |
 
 ## 首日里程碑与最终硬门槛
 
 | 验收项 | 结果 | 证据 |
 |---|---|---|
 | §10 首日 Runner/Registry/状态机/单测 | PASS | runtime.py、tools.py、70 个测试；day1-completion/pytest.txt |
-| pytest 全绿 | PASS | day3/pytest.txt：143 passed；测试名称在 day3/test-names.txt |
+| pytest 全绿 | PASS | day4/pytest.txt：155 项；day4/test-names.txt |
 | 未批准写入 0 | PASS | 原生 SQLite COUNT=0；day3/database-assertions.json |
 | 拒绝后写入 0 | PASS | SQLite COUNT=0；拒绝审计/界面已测 |
 | 重复批准最多写入 1 | PASS | 首次并发批准与后续重复批准均有 SQL 断言 |
@@ -79,9 +98,9 @@ PASS = 本条限定范围有可运行断言；PARTIAL = 只实现部分；NOT_TE
 | 无明文 Key | PARTIAL | 首日不配置/使用 Key；尚未建立专门 secret scan gate |
 | README Mock 命令有效 | PASS | scripts/verify_day1.py；day1-completion/smoke.txt / environment.txt |
 | Trace 显示真实事件 | PASS | day3/persisted-events.json、approved-trace.png、failure-trace.png |
-| UI E2E happy path | PASS | verify_day2.py；day2/summary.json、workbench.png、workbench-mcp.png |
-| OpenAPI 可获取、curl 创建/查询 | PASS | day2/openapi.json、curl-create.json、curl-run.json、curl-steps.json |
-| 30–50 条有来源评测/故障集 | PARTIAL | 143 项手工构造 pytest 回归覆盖审批/MCP/重启，但没有独立 JSONL 评测与两批比较，不替代最终评测集 |
+| UI E2E happy path | PASS | verify_day4.py；day4/browser-summary.json、五张真实截图 |
+| OpenAPI 可获取、curl 创建/查询 | PASS | day4/openapi.json、curl-create.json、curl-query.json |
+| 30–50 条有来源评测/故障集 | PASS | examples/evals/mock.jsonl：42 条固定期望；day4/mock-a/report.json，逐项真实断言 |
 | Live 真实模型 | NOT_TESTED | 适配器已实现，外部 API 无 Key 未运行；离线 fixture 不替代 Live |
 
-Day 3 明确范围的持久化、审批恢复、幂等本地草案与 Trace 已通过；最终平台 P0 **未全部通过**。Evals/JSONL/两批比较和 Docker/CI 仍待交付，外部 Live 未测；SSE 是 P1，当前轮询满足本次验收。
+Day 4 的离线评测、安全回归与四页核心流程已实现并验证；最终平台 P0 仍不宣称全部通过。Compose 容器和云端 CI 未运行，外部 Live 未测；SSE 为 P1。详细实际数量与最终摘要以 RESULTS 和 day4 原始证据为准。

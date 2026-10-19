@@ -1,0 +1,12 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________________ test_reported_usage_over_budget_blocks_tool _________________
+tests\test_runtime.py:219: in test_reported_usage_over_budget_blocks_tool
+    assert run.token_accounting == "synthetic_mock_usage"
+E   AssertionError: assert 'provider_reported' == 'synthetic_mock_usage'
+E     
+E     - synthetic_mock_usage
+E     + provider_reported
+=========================== short test summary info ===========================
+FAILED tests/test_runtime.py::test_reported_usage_over_budget_blocks_tool - A...
+1 failed in 0.45s

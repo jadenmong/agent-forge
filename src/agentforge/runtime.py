@@ -12,6 +12,7 @@ from uuid import uuid4
 
 from pydantic_core import PydanticSerializationError
 
+from .metrics import run_metrics
 from .models import (
     AgentConfig,
     DeterministicMockAdapter,
@@ -66,6 +67,10 @@ class RunState:
     steps: list[RunStep] = field(default_factory=list)
     events: list[RunEvent] = field(default_factory=list)
     invocations: list[ToolInvocation] = field(default_factory=list)
+
+    @property
+    def metrics(self):
+        return run_metrics(self)
 
     def emit(self, event_type: str, *, step_id=None, **metadata):
         self.events.append(
@@ -256,7 +261,11 @@ class RuntimeEngine:
                             else request_estimate + reply_size
                         )
                         accounting = (
-                            "provider_reported"
+                            (
+                                "provider_reported"
+                                if run.mode == "live"
+                                else "synthetic_mock_usage"
+                            )
                             if measured is not None
                             else "utf8_bytes_estimate"
                         )
@@ -271,7 +280,10 @@ class RuntimeEngine:
                             "model.responded",
                             call_count=len(reply.calls),
                             duration_ms=(time.monotonic() - step_started) * 1000,
-                            usage_tokens=measured,
+                            usage_tokens=measured if run.mode == "live" else None,
+                            synthetic_usage_tokens=measured
+                            if run.mode == "mock"
+                            else None,
                             token_accounting=accounting,
                         )
                         finish_active("COMPLETED")
@@ -355,7 +367,12 @@ class RuntimeEngine:
                     try:
                         result = await self.registry.dispatch(call, allowed)
                     except RuntimeFault as exc:
-                        run.emit("tool.failed", call_id=call.call_id, code=exc.code)
+                        run.emit(
+                            "tool.failed",
+                            call_id=call.call_id,
+                            code=exc.code,
+                            retryable=exc.retryable,
+                        )
                         raise
                     except asyncio.CancelledError:
                         run.emit(
@@ -382,7 +399,7 @@ class RuntimeEngine:
             finish_active("FAILED", code)
             run.stop_reason, run.finished_at = code, utcnow()
             run.transition(Status.FAILED)
-            run.emit("run.failed", code=code)
+            run.emit("run.failed", code=code, retryable=RuntimeFault(code).retryable)
         except asyncio.CancelledError:
             finish_active("CANCELLED", "CANCELLED")
             run.transition(Status.CANCELLED)

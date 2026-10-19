@@ -19,6 +19,18 @@ class RuntimeFault(Exception):
         self.code = code
         super().__init__(code)
 
+    @property
+    def retryable(self):
+        # Classification only. Runtime does not automatically retry any operation.
+        return self.code in {
+            "TOOL_TIMEOUT",
+            "MODEL_TIMEOUT",
+            "MCP_TIMEOUT",
+            "MCP_UNAVAILABLE",
+            "PROVIDER_RATE_LIMIT",
+            "PROVIDER_UNAVAILABLE",
+        }
+
 
 class Permission(StrEnum):
     READ_ONLY = "READ_ONLY"

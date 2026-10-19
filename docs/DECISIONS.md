@@ -1,6 +1,6 @@
 # 设计决策
 
-> 当前最新为文末 D012–D015（Day 3，2026-10-18）。前面各节保留对应日期的历史范围，不能把其中“尚未实现”当作最新状态；当前验收见 FEATURE_MATRIX。
+> 当前最新为文末 D016–D019（Day 4，2026-10-19）。前面各节保留对应日期的历史范围，不能把其中“尚未实现”当作最新状态；当前验收见 FEATURE_MATRIX。
 
 ## D001 — 2026-10-14：按当日里程碑实现
 
@@ -144,3 +144,35 @@ RunView 用明确字段过滤，API 不返回 model_resume_state/config_snapshot
 redaction.py 对已知秘密字段、Bearer、Key、邮箱和手机号脱敏；工具参数/结果摘要只放行 Demo 业务字段，未知内容遮盖。事件再次脱敏后入库。摘要用于定位问题；不是可拿来重放模型的完整上下文。修复过手机号规则误伤十六进制摘要中的数字段，加入单词边界并用测试约束。
 
 UI 轮询历史、Run/steps/events 和待审批列表；失败步骤和事件可筛选。SSE 属于 P1，本次不扩展。浏览器/SQL 验收用临时数据库和自动分配本机端口，真实结束/重启 API 进程；Windows 同端口重启交给 Uvicorn 绑定，不用预探测 socket 误判 TIME_WAIT。没有停止用户已有的 5173 服务。
+
+## D016 — 2026-10-19：固定期望的 JSONL 回归，不用 pytest 项数冒充评测集
+
+新增 examples/evals/mock.jsonl 的 42 条可追溯案例，由 Codex 根据 PRD §5.4/8.1 与已有失败模式构造固定期望，不是业务采样或经过人工标注的 Live 质量数据。case_id、scenario、mode、input、allowlist/limits、期望状态/原因/实际工具序列/禁止工具/草案数、必需事件、标签、来源和判定版本均可查。strict schema 拒绝未知字段/场景，重复 ID、超大/空套件拒绝；自定义 CLI 数据集限 1–50 条，内置交付集为 42 条。
+
+evals.py 直接运行 Runtime/Registry/Storage，不启动 pytest、不读取事先写好的“实际结果”，不使用 LLM judge。判定是受限的 state_tools_side_effects_events_v1，不能上传/执行任意 Python 表达式。异常计 EVAL_ERROR/失败，无跳过；CLI 任一失败退出 1，测试用故意错误的草案期望验证这个门槛。预期安全拒绝也可以 PASS，不能把 42/42 说成真实模型完成 42 个任务。
+
+每例隔离 SQLite，草案 COUNT 来自真实查询；恶意结果先经真实本地工具进入 untrusted context，脚本再故意请求越权写入，证明即使模型服从攻击，后端仍阻断／等待审批。该测试不证明真实模型不受注入影响。malformed 参数在 JSON Schema 边界拒绝，另有实际非法 Schema 注册测试。工具大结果/非 JSON/NaN、超时、模型终态、循环/token 预算、审批与未知写结果均有独立期望。
+
+重启案例启动两个独立固定 Python Runtime worker：第一个落盘等待后退出，第二个重开同库，比较 run_id/approval_id/context 摘要及原任务后批准继续。这是实际跨进程恢复；Day 3 的真实 Uvicorn 重启测试继续在 pytest 内执行。不是 arbitrary point 恢复。固定源码模块子进程不是供用户执行任意命令的工具。
+
+## D017 — 指标来源与比较条件必须可解释
+
+metrics.py 复用 Run/Step/Event 计算实际工具尝试、失败率与 start→finish wall-clock，人工等待另有独立计数。无工具时错误率 null；进行中查询显示截至当前的 wall-clock。Mock 的 usage 可以用于构造预算故障，但不进入真实模型 tokens；只有 Live 所有请求都有实际 usage 才能合计，缺失为 unknown。未配置价格，成本始终 unknown，不造 $0。没有实际 Live 质量评测。
+
+报告记录固定期望与实际值、全部布尔断言、公开 Trace、来源标签、UTC 时间、每例限制，以及数据集/fixture/runtime 摘要。两批比较要求 mode/dataset/fixture/judge/case IDs 一致，允许 runtime 摘要改变，输出逐例回归与修复。耗时只是观察记录，不做性能显著性结论。主动故障集的错误率不是线上自然错误率。
+
+retryable 只定义超时、供应商限流/不可用等类型的重试建议分类；不增加自动重试（仍为 0），避免掩盖次数上限或重复高风险副作用。外部 SDK 错误协议仍沿用已测适配器；Day 4 故障脚本明确标 Mock，没有伪造 SDK 成功记录。
+
+## D018 — 文件报告与四个页面，维持单用户范围
+
+EvalJobs 在当前进程持有最多一个活动 eval task，使用已有同父目录下的独立文件报告，无需改 SQLite schema v1。每个报告用临时文件 replace，保留 JSON/Markdown；API 返回公开报告，不暴露 DB 或任意文件路径。进程退出未结束的批次标记 INTERRUPTED，不自动续跑；100 批历史上限，尚无归档接口。同步 SQLite/文件读取与顺序案例适合本机范围，不是可靠队列。
+
+前端使用现有 React 状态与浏览器 hash 提供 Workbench/Trace/Approval/Evals，未引入路由或图表依赖。共享 HTTP helper，审批审计显示绑定参数，Evals 显示逐例断言和两批比较；页面切换清理上一页操作错误。Workbench 保留当前 Run 的紧凑 Trace，避免破坏原演示。轮询满足 P0，SSE 延后。OpenAPI 0.4.0 公开相同接口，其他语言客户端不依赖 Python 类型。
+
+## D019 — 本地真实验证与 CI 配置分开报告
+
+CI 对 push/pull_request 执行 Ruff、pytest、独立 Mock eval、前端构建和 Playwright；任一步非零即失败，没有 continue-on-error、条件跳过或 Live secrets。依赖安装需要包仓库，测试/Mock 执行只使用本机。配置参考官方 [checkout](https://github.com/actions/checkout)、[setup-python](https://github.com/actions/setup-python)、[setup-node](https://github.com/actions/setup-node)。本次使用 v6 系列固定 major；没有推送触发云端运行，不能声称 GitHub Actions 已绿。
+
+全新环境演练通过本机 git clone --local --no-hardlinks 创建干净检出，再覆盖当前尚未提交的候选源码；新建 venv、pip editable 安装、npm ci，实际执行 README 的测试/构建/Mock/HTTP 页面路径。记录 candidate 文件摘要与原始日志；不是公共 GitHub HEAD 已含 Day 4，也不是全新操作系统。Playwright 使用宿主机已安装 Edge 或 Chromium，安装浏览器仍是先决条件。
+
+提供 Compose + Python editable 源码镜像 + React 静态构建/nginx，保留 fixture 的源码路径约定，绑定本机端口、单 API worker、命名 Demo 数据卷。当前环境没有 Docker，容器运行 NOT_TESTED；不因配置文件存在就宣布一键启动验收通过。没有新增生产依赖。

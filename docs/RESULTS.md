@@ -1,5 +1,121 @@
 # 实际交付结果
 
+## 2026-10-19：Day 4 评测、安全回归、四页工作台与文档
+
+先跑 Day 3 基线：**143 passed in 41.55s**，原始输出见 [baseline-pytest.txt](evidence/day4/baseline-pytest.txt)。保留 Day 1–3 源码历史、交付与原运行证据，没有覆盖旧成果或自动提交/推送。
+
+### 日期、模式、样本数和最终结果
+
+| 验证 | 模式/样本 | 通过 / 失败 | 证据 |
+|---|---|---|---|
+| 全量 pytest | 155 个程序回归项，含原 143 + 新 12 | 155 / 0 | evidence/day4/pytest.txt、pytest.xml、test-names.txt |
+| 独立 eval A | Mock，42 条固定期望 JSONL | 42 / 0 | evidence/day4/mock-a/report.json、report.md |
+| 独立 eval B | Mock，同 42 条 | 42 / 0 | evidence/day4/mock-b/report.json、report.md |
+| 两批比较 | 同模式/数据集/fixture/judge | 0 回归、0 修复、42 未变 | evidence/day4/comparison.json |
+| 真实浏览器 | 四个页面、批准 SQL 0→1、缺 Key、两批 eval 与比较 | PASS | evidence/day4/browser-summary.json、五张页面截图 |
+| 新检出候选环境 | 新 venv、pip install、npm ci、pytest/build/CLI/eval/browser | PASS；pytest 155 / 0 | evidence/day4/clean-checkout/summary.json |
+| 外部 Live 质量 | 未运行，0 个外部样本 | NOT_TESTED | **未进行真实模型质量评测** |
+| Docker / 云端 Actions | Docker 不可用；未推送触发工作流 | NOT_TESTED | evidence/day4/docker-status.txt；工作流仅配置 |
+
+42 是独立 EvalCase 数，不是 pytest 数；负向场景正确 FAILED/拒绝/超限也可以判 PASS，不能称真实模型任务成功率 100%。A/B 各执行完整 42 条，不相加虚称 84 条不同用例。浏览器和新检出重复验证也不计入独立 pytest 项数。
+
+### 实际命令与原始摘要
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m ruff check src tests scripts --fix
+.\.venv\Scripts\python.exe -m ruff format src tests scripts
+.\.venv\Scripts\python.exe -u scripts/verify_day4.py
+.\.venv\Scripts\python.exe -u scripts/verify_clean_checkout.py
+```
+
+统一脚本实际执行 Ruff check/format check、pytest -q --junitxml、两次独立 eval、compare、npm run build、pip check/freeze、真实 Playwright 和 curl；子进程移除 API Key。最终原始摘要：
+
+```text
+All checks passed!
+32 files already formatted
+155 passed in 77.14s (0:01:17)
+```
+
+独立评测实际命令（统一脚本传入临时隔离输出目录，保存 report.json/md）：
+
+```powershell
+python -m agentforge.evals run --output <临时目录>/mock-a
+python -m agentforge.evals run --output <临时目录>/mock-b
+python -m agentforge.evals compare docs/evidence/day4/mock-a/report.json docs/evidence/day4/mock-b/report.json --output docs/evidence/day4/comparison.json
+npm.cmd --prefix apps/web run build
+```
+
+两次 runner stdout 都包含 `"mode":"mock", "total":42, "passed":42, "failed":0, "live_quality_evaluation":"NOT_RUN"`（原文件保留标准空格）。完整命令输出在 mock-a-stdout.txt、mock-b-stdout.txt、compare-stdout.txt 和 web-build.txt。
+前端 tsc/Vite 构建退出 0；浏览器脚本实际输出：
+
+```text
+PASS: four-page Playwright, native SQL invariants, two Mock batches, comparison, missing Live key and curl.
+```
+
+### 实测指标、配置与限制
+
+独立 A/B 均记录 **93 次实际工具尝试、6 次工具失败，错误率 6/93**。失败来自主动注入的 wall-time/工具超时/异常/非 JSON/NaN/超大结果，并都满足固定预期；不是线上自然错误率。每例有 wall_clock_seconds，批次 A/B duration_seconds 分别约 16.735/15.266 秒，仅为这两次观察，不构成 p50/p95、供应商速度或性能提升结论。
+
+Mock model_tokens=null、cost=null，含合成 usage 的预算场景也如此；合成值另标 synthetic_mock_usage/synthetic_usage_tokens。Live 只有所有模型尝试均有真实响应 usage 才汇总 tokens；缺失仍 unknown，价格未配置不假设 $0。没有任何外部模型质量样本或成本数字。
+
+报告记录每例实际 limits（默认 8 步/8 模型/16 工具/30 秒活动执行/10 秒模型超时/64000 预算代理，边界 case 各自覆盖）、judge=state_tools_side_effects_events_v1、automatic_retries=0、数据集/fixture/核心源码摘要。
+dataset_sha256=`2dcab0ad937d6fa46cefeb3692437e6dbff3261db634d4e9f9e479c77d7c7c7d`；核心源码摘要覆盖 runtime/tools/storage/evals，安装版本见 environment.txt；新检出演练另记录候选文件摘要。
+
+每例 SQLite 草案数来自实际查询。两个 injection case 均先由工具返回恶意结果，模型脚本收到 untrusted 数据后故意请求写入；一个被 allowlist 拒绝，一个仍等待人工审批，草案都为 0。不是“真实模型抗注入准确率”。
+
+restart-approval 使用两个固定 Runtime worker 进程：第一个写等待点并退出，第二个核对原 ID/上下文再批准。原真实 Uvicorn 进程重启测试继续包含于 pytest。未知写结果/安全点等故障构造仍按 Day 3 边界说明，不扩大到任意位置恢复或任意外部副作用 exactly-once。
+
+### 新增自动化测试名称
+
+以下 12 项来自实际 JUnit；另强化原 test_reported_usage_over_budget_blocks_tool，检查合成 usage 不进入真实 tokens 字段。
+
+```text
+tests.test_eval_api::test_eval_api_executes_mock_suite_compares_and_survives_app_restart
+tests.test_eval_api::test_interrupted_eval_is_reported_and_not_automatically_replayed
+tests.test_eval_api::test_only_one_eval_job_is_allowed_and_shutdown_records_interruption
+tests.test_evals::test_bundled_mock_dataset_executes_all_cases_and_records_evidence
+tests.test_evals::test_wrong_expected_side_effect_is_reported_failed_not_skipped
+tests.test_evals::test_dataset_rejects_duplicate_ids_and_unsupported_modes
+tests.test_evals::test_compare_reports_rejects_mismatched_cases_and_tracks_regressions
+tests.test_evals::test_cli_fails_when_a_case_has_wrong_expectations
+tests.test_evals::test_malformed_tool_schema_is_rejected_before_handler_execution
+tests.test_metrics::test_mock_usage_is_not_reported_as_real_tokens_or_free_cost
+tests.test_metrics::test_live_usage_is_counted_only_when_all_model_attempts_have_usage
+tests.test_metrics::test_metrics_count_actual_tool_failures_and_wall_clock_waiting
+```
+
+完整 155 项名称见 [test-names.txt](evidence/day4/test-names.txt)。42 条评测的每项 case_id/期望/实际值/checks 都保存在两份独立报告，不以 pytest 参数化数量替代。
+
+### 中间失败与证据
+
+| 文件（相对 docs） | 含义 |
+|---|---|
+| evidence/day4/initial-eval-failure.txt | runner 模块不存在时需求测试先实际失败 |
+| evidence/day4/synthetic-usage-before-fix.txt | 旧 provider_reported 语义的实际失败；修复后全量通过 |
+| evidence/day4/initial-browser-failure.txt | Playwright 精确/宽松 label 歧义的实际失败摘录与定位修复，非完整 stderr |
+| evidence/day4/initial-clean-checkout-failure.txt | 首次新环境在浏览器错误输出捕获时遇 Windows GBK/UTF-8 解码问题；保留摘录后修复重演 |
+| evidence/day4/ruff-check.txt / ruff-format.txt / pytest.txt / web-build.txt | 最终检查/测试/构建原始输出 |
+| evidence/day4/mock-a/report.json / report.md、mock-b 同名文件 | 两次独立运行的完整机器/人工可读报告 |
+| evidence/day4/comparison.json / browser-eval.json / browser-summary.json | CLI 对比和实际浏览器批次/断言 |
+| evidence/day4/workbench.png / trace.png / approval.png / evals.png / comparison.png | 五张真实浏览器截图 |
+| evidence/day4/curl-create.json / curl-query.json / openapi.json / health.json | 实际语言无关 HTTP 和生成规范 |
+| evidence/day4/clean-checkout/ | 新检出安装/测试/构建/演示/eval/浏览器日志及候选源码摘要 |
+| evidence/day4/environment.txt / pip-check.txt / docker-status.txt | 实际安装环境、依赖检查及 Docker 未测状态 |
+
+### 当前仍未声称的能力
+
+本机 clone 再覆盖未提交候选文件，验证新 venv/npm ci；不是公共 GitHub HEAD 已更新，也不是全新 OS，浏览器使用已安装 Edge/Chromium。
+该环境最终 pytest 原始末行为 `155 passed in 113.32s (0:01:53)`；演练脚本末行为 `PASS: clean candidate checkout, new venv, npm ci, tests, build, eval and browser.`，见 clean-checkout/pytest.txt、browser.txt、summary.json。该次执行不增加独立测试用例数。
+最终另用 Python 检查全部 22 份 Markdown 的本地链接（0 个失效）、Day 4 JSON/JUnit、两批逐项断言、注入草案数、合成 usage 标记和四个新 OpenAPI 路径；新检出演练的 50 个可执行源码/测试/脚本/前端/部署候选文件摘要均与交付源码一致。`git diff --check` 对源码与文档通过，原始失败输出的空白保持不动。
+CI 已配置并在本机跑同类门槛，云端 Actions 未触发；Compose/镜像/nginx 已提供，但 Docker 不可用，容器未测。单进程、文件报告、同步 SQLite、有限脱敏，不是生产平台。
+未进行真实模型质量评测。SSE 仍属 P1，当前轮询满足本次核心流程。
+完整文件清单、五个问答、API 及验收见 [Day 4 交付](deliveries/2026-10-19-day4.md)。
+
+---
+
+
+
 ## 2026-10-18：Day 3 持久化、审批中断/恢复与 Trace
 
 先实际运行原 Day 2 全量测试：**107 passed in 13.05s**，见 [baseline-pytest.txt](evidence/day3/baseline-pytest.txt)。

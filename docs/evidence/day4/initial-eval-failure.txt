@@ -1,0 +1,16 @@
+
+=================================== ERRORS ====================================
+____________________ ERROR collecting tests/test_evals.py _____________________
+ImportError while importing test module 'F:\github-project\agent-forge\tests\test_evals.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+D:\Python3.12.3\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_evals.py:8: in <module>
+    from agentforge.evals import DEFAULT_DATASET, compare_reports, load_cases, run_suite
+E   ModuleNotFoundError: No module named 'agentforge.evals'
+=========================== short test summary info ===========================
+ERROR tests/test_evals.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.40s

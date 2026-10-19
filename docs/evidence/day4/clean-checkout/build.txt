@@ -1,0 +1,14 @@
+
+> agentforge-workbench@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 17 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.36 kB │ gzip:  0.27 kB
+dist/assets/index-mYkCKZWY.css    3.67 kB │ gzip:  1.42 kB
+dist/assets/index-DZtyGQ2r.js   240.79 kB │ gzip: 75.14 kB
+
+✓ built in 196ms

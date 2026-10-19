@@ -1,5 +1,24 @@
 # 故障与边界证据
 
+## Day 4（2026-10-19）评测与指标故障
+
+| 故障/边界 | 验证与处理 | 证据 |
+|---|---|---|
+| runner 尚未实现 | 先写数据集执行、错误期望、比较等需求测试，实际 import 失败；随后实现 | day4/initial-eval-failure.txt |
+| 合成 Mock usage 被旧逻辑标成 provider_reported | 强化已有预算测试先失败，再标为 synthetic_mock_usage；事件 usage_tokens 留空，合成值另放 synthetic_usage_tokens；真实模型 tokens 仍 unknown | day4/synthetic-usage-before-fix.txt；test_reported_usage_over_budget_blocks_tool、test_mock_usage_is_not_reported_as_real_tokens_or_free_cost |
+| 只断言评测 HTTP 202 会掩盖错误判定 | 故意设置 direct case 期望草案 1，实际 0 时必须 FAIL；CLI 返回 1；不跳过 | test_wrong_expected_side_effect_is_reported_failed_not_skipped、test_cli_fails_when_a_case_has_wrong_expectations |
+| Mock 被误当 Live 质量 | schema mode 仅 mock、API 拒绝 live；每份报告 NOT_RUN；UI/README 明示未进行真实模型质量评测 | 42 条报告、test_dataset_rejects_duplicate_ids_and_unsupported_modes、test_eval_api_executes_mock_suite_compares_and_survives_app_restart |
+| 恶意 tool result 诱导写入 | 真实 untrusted_note 工具返回注入文本，后续脚本请求写；无权限失败、有权限仍待审；草案 0 | 两个 injection-* case；观察字段 malicious_result_returned/model_received_untrusted_result 都必须 true |
+| retryable 被理解成会重试 | 超时/限流只分类，无自动重试；工具超时判定包含实际尝试 1 次 | tool-timeout / provider-rate-limit case；config.automatic_retries=0 |
+| runner 意外异常会不会漏记？ | 异常转换为明确 EVAL_ERROR，计失败而非 skip；所有用例都有 results 项 | evals.run_suite；固定 suite 总数与报告数核对 |
+| 不同数据集的“提升”被混比 | 比较前核对模式、数据集、fixture、judge、case IDs；不一致拒绝 | test_compare_reports_rejects_mismatched_cases_and_tracks_regressions；API 409 |
+| eval task 随进程退出丢失 | 运行中报告启动后标 INTERRUPTED；不自动重放整批操作 | test_interrupted_eval_is_reported_and_not_automatically_replayed、test_only_one_eval_job_is_allowed_and_shutdown_records_interruption |
+| Playwright 任务输入定位失败 | 精确 label 未匹配；宽松 label 又匹配历史下拉。改用 textbox 角色和精确可访问名称 | day4/initial-browser-failure.txt：实际失败摘录，非完整 stderr |
+| 新环境的浏览器失败输出又触发解码错误 | Windows 子进程 stderr 编码与父进程 UTF-8 捕获不一致；统一 Python IO 为 UTF-8，并保留不可解码字节为转义，重新演练候选检出 | day4/initial-clean-checkout-failure.txt；clean-checkout 日志 |
+
+42 条是 Codex 依据 PRD/现有失败模式构造的离线控制回归，不是经过人工评审的 Live 标签集。负向场景正确失败可判 PASS；工具错误率含故障注入，不能当线上可靠性。真实进程恢复分别验证 Runtime worker 和原 Uvicorn 安全等待点，不扩大任意恢复声明。
+本机新的 venv/npm ci 演练与容器是不同证据；Docker 不可用时容器运行未测。CI 配置存在不表示云端已执行，不能用本机结果填成远端 CI 通过。
+
 ## Day 3（2026-10-18）失败复现、恢复与范围
 
 | 故障/风险 | 行为与验证 | 证据 |

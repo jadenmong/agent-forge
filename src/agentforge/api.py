@@ -14,7 +14,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from starlette.exceptions import HTTPException
 
 from .demo import TOOL_NAMES, demo_registry
+from .eval_service import EvalJobs, EvalView
 from .mcp_adapter import MCPClientAdapter
+from .metrics import RunMetrics
 from .models import AgentConfig, Limits, RunEvent, RunStep, StrictModel
 from .runtime import Status
 from .service import RunService
@@ -66,6 +68,10 @@ class ApprovalDecision(StrictModel):
     decision: Literal["approve", "reject"]
 
 
+class EvalCreate(StrictModel):
+    mode: Literal["mock"] = "mock"
+
+
 class ApprovalView(BaseModel):
     approval_id: str
     run_id: str
@@ -105,6 +111,7 @@ class RunView(BaseModel):
     finished_at: str | None
     active_seconds: float
     approval_wait_seconds: float
+    metrics: RunMetrics
 
 
 class ToolView(BaseModel):
@@ -140,12 +147,14 @@ def create_app(database_path=None) -> FastAPI:
     storage = Storage(path)
     registry = demo_registry(include_purchase=True)
     service = RunService(storage, registry)
+    evals = EvalJobs(storage.path.parent / "evals")
     mcp = MCPClientAdapter()
 
     @asynccontextmanager
     async def lifespan(app):
         storage.initialize()
         storage.recover()
+        evals.recover()
         for tool in await mcp.discover():
             registry.add(tool)
         for config in (
@@ -165,12 +174,13 @@ def create_app(database_path=None) -> FastAPI:
         try:
             yield
         finally:
+            await evals.close()
             await service.close()
             storage.close()
 
     app = FastAPI(
         title="AgentForge",
-        version="0.3.0",
+        version="0.4.0",
         lifespan=lifespan,
         responses={
             code: {"model": ErrorEnvelope} for code in (400, 404, 409, 422, 500, 503)
@@ -210,7 +220,12 @@ def create_app(database_path=None) -> FastAPI:
 
     @app.exception_handler(RuntimeFault)
     async def runtime_error(request, exc):
-        if exc.code in {"RUN_NOT_FOUND", "AGENT_NOT_FOUND", "APPROVAL_NOT_FOUND"}:
+        if exc.code in {
+            "RUN_NOT_FOUND",
+            "AGENT_NOT_FOUND",
+            "APPROVAL_NOT_FOUND",
+            "EVAL_NOT_FOUND",
+        }:
             return error(
                 request, 404, exc.code, "The requested resource was not found."
             )
@@ -314,6 +329,23 @@ def create_app(database_path=None) -> FastAPI:
     @app.get("/api/tools", response_model=Envelope[list[ToolView]])
     async def tools(request: Request):
         return envelope(request, registry.metadata())
+
+    @app.post("/api/evals/run", status_code=202, response_model=Envelope[EvalView])
+    async def create_eval(request: Request, body: EvalCreate):
+        return envelope(request, evals.start())
+
+    @app.get("/api/evals", response_model=Envelope[list[EvalView]])
+    async def list_evals(request: Request):
+        # Summaries avoid returning all traces for every historic batch.
+        return envelope(request, [{**report, "results": []} for report in evals.list()])
+
+    @app.get("/api/evals/compare", response_model=Envelope[dict])
+    async def compare_evals(request: Request, baseline_id: str, candidate_id: str):
+        return envelope(request, evals.compare(baseline_id, candidate_id))
+
+    @app.get("/api/evals/{eval_id}", response_model=Envelope[EvalView])
+    async def get_eval(request: Request, eval_id: str):
+        return envelope(request, evals.get(eval_id))
 
     @app.post("/api/runs", status_code=202, response_model=Envelope[RunView])
     async def create_run(request: Request, body: RunCreate):

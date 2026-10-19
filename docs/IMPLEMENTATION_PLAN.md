@@ -1,6 +1,6 @@
 # AgentForge 本周实施清单（一页）
 
-> 以下为 10/14 原始计划，按当时范围保留。实际 Day 3 于 2026-10-18 完成 SQLite/审批/恢复/Trace，143 项回归通过；当前范围与剩余 Evals/Compose 以 [FEATURE_MATRIX](FEATURE_MATRIX.md) 和 [RESULTS](RESULTS.md) 为准，不把原计划日期当作已交付记录。
+> 以下为 10/14 原始计划，按当时范围保留。Day 4 实际于 2026-10-19 完成离线 Evals/安全回归/四页与 CI 配置，155 项程序回归、42 条独立 Mock 用例；Compose 容器/云端 CI/Live 未测。当前范围与证据以 [FEATURE_MATRIX](FEATURE_MATRIX.md) 和 [RESULTS](RESULTS.md) 为准，不把原计划日期当作已交付记录。
 
 依据：`PRD.md` P0、安全不变量与 §10；日期：2026-10-14（UTC+8）。
 现状：开始时仅有 PRD，无代码、无 `.git`；保留原文，不初始化或改写历史。

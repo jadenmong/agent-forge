@@ -1,0 +1,11 @@
+Actual clean candidate rehearsal failure, excerpt from the command output:
+
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa1 in position 1555: invalid start byte
+TypeError: can only concatenate str (not "NoneType") to str
+
+The first fresh checkout completed dependency installation, pytest, build,
+Mock CLI and the independent eval. Its browser subprocess error output used
+Windows encoding while the parent decoded UTF-8, so the diagnostic capture also
+failed. The verifier now forces Python child IO to UTF-8 and preserves undecodable
+bytes as escapes. A fresh candidate rehearsal is required after this change.
+This is a recorded excerpt/explanation, not full captured stderr or a PASS.

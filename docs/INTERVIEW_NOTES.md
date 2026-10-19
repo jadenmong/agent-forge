@@ -1,5 +1,16 @@
 # AgentForge 面试问答
 
+## Day 4 五个追问（2026-10-19，当前状态）
+
+1. **42/42 是否表示模型任务成功率 100%？** 不是。42 条固定期望检查自研 Runtime 的状态、工具政策、协议和 SQL 副作用；正确拒绝或超限终止也可 PASS。pytest 是 155 个程序回归项，和 42 个独立 EvalCase 分开统计。未进行真实模型质量评测。
+2. **怎么避免自己写 runner 给自己打满分？** 期望先写在可审阅 JSONL，不从实际结果生成；judge 检查实际工具序列/禁止工具、状态/原因、SQL 草案数和事件。故意写错期望会 FAIL，CLI 非零退出；异常计失败不跳过。报告保留每个布尔断言与 Trace，局限是案例仍由实现者构造，不能替代独立评审或 Live 标注。
+3. **Prompt Injection 如何测，能证明什么？** 恶意数据由真实本地工具返回并进入 untrusted context；确定性脚本故意在之后请求敏感写入。两个案例证明无权限被拒绝、有工具授权也仍需人工审批，草案 0；不能证明真实模型自身不受诱导，也不是任意注入防御认证。
+4. **tokens、延迟和错误率有没有混淆？** budget_tokens 可能是 UTF-8 字节估计；合成 usage 标 synthetic_mock_usage，只用于预算故障。真实模型 tokens 仅汇总完整 Live usage，否则 unknown；缺价格成本 unknown。wall-clock 包含人工等待，活动时间单列；故障集错误率不能当线上自然故障率。两次运行耗时变化不算性能提升证据。
+5. **比较版本和 CI 如何复现？** JSONL/fixture/judge/mode 一致才比较，记录 runtime 摘要，输出逐例 regression/improvement；CLI 有失败或回归就退出 1。CI 配置运行格式、pytest、独立 Mock eval、构建与 Playwright，不使用 Live secrets。新 clone 候选覆盖加新 venv/npm ci 的日志独立保存；Docker/云端 Actions 未实际运行就标未测。
+
+源码入口：[evals.py](../src/agentforge/evals.py)、[metrics.py](../src/agentforge/metrics.py)、[eval_service.py](../src/agentforge/eval_service.py)、[Evals.tsx](../apps/web/src/Evals.tsx)、[CI](../.github/workflows/ci.yml)。
+当前证据：[42 条报告](evidence/day4/mock-a/report.json)、[比较](evidence/day4/comparison.json)、[浏览器](evidence/day4/browser-summary.json)。贡献仍按 Codex 编码、候选人实际参与的需求/审阅/验收/讲解分开表述。
+
 ## Day 3 五个追问（2026-10-18，当前状态）
 
 1. **为什么不能只让 prompt 写“必须审批”？** 模型输出是不可信请求。`RuntimeEngine.run` 先通过 Registry 校验，再对 REQUIRES_APPROVAL 调用执行 `Storage.pause`；普通 dispatch 永远不能执行写工具。approve 接口只收 ID 和决议，服务端再次检查冻结的权限、参数及预算。候选人应能沿 runtime → storage → service 读出这条路径。

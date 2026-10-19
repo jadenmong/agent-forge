@@ -1,7 +1,7 @@
-# REST/JSON API 契约 — Day 3（2026-10-18）
+# REST/JSON API 契约 — Day 4（2026-10-19）
 
 源码：`src/agentforge/api.py`。默认 `http://127.0.0.1:8000`，单进程、无认证的本机单用户 Demo。
-UI 与其他语言客户端使用相同公开 API，不要求 Python 客户端。实际规范在 `/openapi.json`，本次快照见 [openapi.json](evidence/day3/openapi.json)。
+UI 与其他语言客户端使用相同公开 API，不要求 Python 客户端。实际规范在 `/openapi.json`，API 版本 0.4.0，本次快照见 [openapi.json](evidence/day4/openapi.json)。
 
 ## 1. 统一响应
 
@@ -28,11 +28,15 @@ OpenAPI 是标准规范文档，不包装 data；`/docs` 是 Swagger 文档页�
 | GET | `/api/runs/{run_id}/approvals` | 200 | 指定 Run 的待审及已决审批审计数组 |
 | POST | `/api/runs/{run_id}/approve` | 200 | run_id、当前 status、approval、replayed；批准或拒绝 |
 | POST | `/api/runs/{run_id}/resume` | 202 | 安全恢复后的 Run 快照；不是任意断点重跑 |
+| POST | `/api/evals/run` | 202 | 新建固定 Mock 套件批次，返回 eval_id/status |
+| GET | `/api/evals` | 200 | 批次摘要，results 留空；最新文件修改顺序优先 |
+| GET | `/api/evals/{eval_id}` | 200 | 完整批次、逐项固定期望/实际值/断言/公开 Trace/指标 |
+| GET | `/api/evals/compare` | 200 | 两批 regressions/improvements/unchanged；baseline_id、candidate_id 为必填查询参数 |
 | GET | `/openapi.json` | 200 | 标准 OpenAPI JSON |
 
 列表参数：offset 默认 0 且 ≥0；limit 默认 20，范围 1–100。
 事件参数：after_event_id 默认 0 且 ≥0，返回 event_id 严格大于该值的事件。
-取消控制端点、评测和 SSE 尚未实现；界面使用轮询。公开 Run/Step/Event 不暴露 config_snapshot 或私有 model_resume_state。
+取消控制端点和 SSE 尚未实现；界面使用轮询。公开 Run/Step/Event 不暴露 config_snapshot 或私有 model_resume_state。
 
 ## 3. 创建 Agent 与 Run
 
@@ -64,7 +68,7 @@ input 长度 1–16000 字符，纯空白拒绝。
 | HTTP | code | 条件 |
 |---|---|---|
 | 400 | INVALID_HOST | 非本机允许的 Host |
-| 404 | AGENT_NOT_FOUND / RUN_NOT_FOUND / APPROVAL_NOT_FOUND | 资源或绑定审批不存在 |
+| 404 | AGENT_NOT_FOUND / RUN_NOT_FOUND / APPROVAL_NOT_FOUND / EVAL_NOT_FOUND | 资源或绑定审批不存在；非法 eval_id 也不允许路径访问 |
 | 422 | INVALID_REQUEST | 字段、范围、类型非法或空白任务，不回显原始值 |
 | 422 | UNKNOWN_TOOL | Agent allowlist 中包含未注册工具 |
 | 409 | CAPACITY_REACHED | 本机容量限制 |
@@ -72,6 +76,7 @@ input 长度 1–16000 字符，纯空白拒绝。
 | 409 | CHECKPOINT_INVALID / STALE_RUN_STATE | 绑定、完整性或 revision 校验失败，未提交写入 |
 | 409 | UNSAFE_RESUME_POINT | 终态、未知写结果、模型/只读调用中断等不支持恢复 |
 | 409 | LIVE_MODEL_CHANGED | 恢复时服务端模型与冻结的模型配置不同 |
+| 409 | EVAL_NOT_COMPLETED / INCOMPARABLE_EVALS | 比较未结束批次或模式/数据集/fixture/判定版本不一致 |
 | 503 | LIVE_NOT_CONFIGURED | OPENAI_API_KEY 或 OPENAI_MODEL 缺失/为空 |
 | 503 | STORAGE_BUSY | 本地数据库忙，先查询决议再重试 |
 | 500 | INTERNAL_ERROR | 未预期错误，不返回内部异常 |
@@ -123,3 +128,38 @@ ApprovalView 包含 approval_id、run_id、call_id、tool_name、request_payload
 
 resume 无需请求体；不能用它批准 pending 调用。公开 Trace 是脱敏摘要，私有精确上下文不提供导出接口。
 完整 curl 审批步骤见 [README](../README.md)；自动化真实 SQL/进程证据见 [database-assertions.json](evidence/day3/database-assertions.json)。
+
+## 7. Day 4 指标与评测契约
+
+RunView 增加 metrics 对象：tool_calls（执行尝试，含失败）、tool_errors（FAILED 工具步骤数）、tool_error_rate（errors/calls；无调用为 null）、wall_clock_seconds（started_at 到 finished_at，活动任务为截至查询时，包含人工等待）、model_tokens、token_source、cost。
+
+model_tokens 仅在 mode=live 且所有模型尝试均有响应 usage 时合计；不完整时为 null/unknown。Mock 一律 null，即使预算故障脚本填了合成 usage。原 budget_tokens/token_accounting 仍用于限流，不能把字节估计拿来显示为真实模型 tokens。价格未知，cost=null，不表示 $0。单次样本耗时不是性能基准。
+token_accounting 可能为 utf8_bytes_estimate、provider_reported、synthetic_mock_usage 或 mixed。model.responded 事件的 usage_tokens 为可用的 Live usage；Mock 合成值只在 synthetic_usage_tokens 中出现，不计真实模型 tokens。
+
+`POST /api/evals/run` 请求只有 `{"mode":"mock"}`，也允许空 JSON 对象使用默认值；不接受任意文件路径、判定脚本、工具安装命令、URL 或 Key。live 或额外字段返回 422。本次未提供 Live 评测入口，**未进行真实模型质量评测**。
+
+单进程最多一个活动评测、100 个保存批次，超限 409。每个用例有隔离 SQLite；报告在 `AGENTFORGE_DB_PATH` 所在目录下的 evals/{UUID}/report.json，私有用例数据库不由 HTTP 提供下载。普通 Run 列表与评测数据库独立；评测结果内嵌该用例的公开步骤/事件。
+
+批次 status 为 RUNNING / COMPLETED / FAILED / INTERRUPTED。COMPLETED 仅表示所有用例判定结束，不代表全部通过，必须读取 summary.failed。报告包含：
+
+- eval_id、模式、UTC 开始/完成时间、实际批次耗时、dataset_sha256。
+- config：判定版本、自动重试次数 0、fixture/source 摘要、每例实际限制。
+- summary.total/passed/failed；逐例 source/tags、固定期望、实际状态/工具/草案数、checks、run_id、指标与公开 Trace。
+- metrics 聚合工具调用/错误率，model_tokens/cost 均为 null；live_quality_evaluation=NOT_RUN。
+
+执行异常不会跳过用例，而是记录 EVAL_ERROR / CASE_EXECUTION_ERROR 并计入失败；批次自身异常为 FAILED。进程重启检测到未完成报告会标记 INTERRUPTED，不自动续跑评测任务。重新发起批次生成新 eval_id；POST 创建没有请求级幂等。
+
+比较要求两个批次 COMPLETED，mode、dataset_sha256、fixture 摘要和 judge 相同，case_id 集合相同。允许 runtime source 摘要不同，以便比较代码修复；返回由逐例结果计算的回归/修复列表，不声称时延差异有统计意义。
+
+工具/模型失败事件新增 retryable 布尔值，表示错误类型可考虑重试；当前 Runtime **没有自动重试**。未知写结果依然必须核对，不能靠 retryable 自动补发。
+
+HTTP 示例（PowerShell，API 已启动）：
+
+```powershell
+$batch = curl.exe --silent --show-error --fail --noproxy "*" -H "Content-Type: application/json" --data-binary "@examples/http/create-eval.json" http://127.0.0.1:8000/api/evals/run | ConvertFrom-Json
+$evalId = $batch.data.eval_id
+curl.exe --silent --noproxy "*" "http://127.0.0.1:8000/api/evals/$evalId"
+curl.exe --silent --noproxy "*" "http://127.0.0.1:8000/api/evals/compare?baseline_id=<基线UUID>&candidate_id=<候选UUID>"
+```
+
+接口与 UI 复用同一评测入口，Java/TS/Go 等只需发送相同 HTTP/JSON。不是多语言 Runtime。实际结果见 [mock-a/report.json](evidence/day4/mock-a/report.json)、[comparison.json](evidence/day4/comparison.json)、[browser-summary.json](evidence/day4/browser-summary.json)。

@@ -216,7 +216,11 @@ def test_reported_usage_over_budget_blocks_tool():
     )
     run = execute(adapter, allowed_tools=frozenset({"calculate_total_cost"}))
     assert run.stop_reason == "TOKEN_BUDGET" and run.tool_call_count == 0
-    assert run.token_accounting == "provider_reported"
+    assert run.token_accounting == "synthetic_mock_usage"
+    response = next(e for e in run.events if e["type"] == "model.responded")
+    assert response["payload"]["usage_tokens"] is None
+    assert response["payload"]["synthetic_usage_tokens"] == 1000000
+    assert run.metrics.model_tokens is None
 
 
 @pytest.mark.parametrize(

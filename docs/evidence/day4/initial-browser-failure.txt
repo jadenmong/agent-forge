@@ -1,0 +1,13 @@
+Observed Playwright failure, excerpt from the actual verification run:
+
+Locator.fill: Timeout 30000ms exceeded.
+waiting for get_by_label("任务", exact=True)
+
+The controlled textarea contributes its initial text to the label text used by
+this locator. A second actual attempt with non-exact matching failed with:
+
+strict mode violation: get_by_label("任务") resolved to 2 elements
+
+It also matched the history selector containing the option text with "任务".
+The verifier now uses get_by_role("textbox", name="任务", exact=True).
+This file is an excerpt and explanation, not the full captured stderr.

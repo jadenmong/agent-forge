@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "pages": [
+    "Workbench",
+    "Trace",
+    "Approval",
+    "Evals"
+  ],
+  "drafts_before": 0,
+  "drafts_after": 1,
+  "eval_cases": 42,
+  "passed": 42,
+  "failed": 0,
+  "baseline_id": "2aecaa60-0014-4772-93f1-785ed0aeaceb",
+  "candidate_id": "c0a828dc-5756-4abc-80db-e68d77a7dbfd",
+  "console_exceptions": [],
+  "live_missing_key": "LIVE_NOT_CONFIGURED",
+  "comparison": "0 regressions / 42 unchanged"
+}

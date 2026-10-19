@@ -1,4 +1,37 @@
-# 架构：Day 3（2026-10-18）
+# 架构：Day 4（2026-10-19）
+
+```mermaid
+flowchart TD
+  UI[Workbench / Trace / Approval / Evals] -->|公开 REST JSON| API[FastAPI 0.4.0]
+  Other[其他语言 HTTP 客户端] --> API
+  API --> RunService[RunService / 当前进程任务]
+  RunService --> Engine[自研 RuntimeEngine]
+  API --> Jobs[EvalJobs / 一个活动批次]
+  CLI[独立 python -m eval CLI] --> Eval[自研 EvalCase loader / Runner / Judge]
+  Jobs --> Eval
+  Dataset[42 条固定期望 JSONL] --> Eval
+  Eval -->|每例独立 SQLite| Engine
+  Engine --> Tools[Registry / allowlist / Schema / 审批 / 超时]
+  Engine --> Adapters[确定性 Mock / 可选 Responses SDK]
+  Engine --> DB[(Run / Step / Event / Invocation / Approval / Demo 草案)]
+  Eval --> Reports[JSON + Markdown / 两批比较]
+  Engine --> Metrics[实际 wall-clock / 工具调用和错误 / 可用 Live usage]
+  Reports --> API
+  Metrics --> API
+```
+
+结构示意；实际运行证据见 [day4/browser-summary.json](evidence/day4/browser-summary.json)。
+四个 hash 页面复用公开 API，前端没有直接写 DB 或提升工具权限的入口。普通 Run 保留 Day 3 状态机和恢复规则；EvalJobs 只在当前进程运行一个固定 Mock 套件，批次报告用文件持久化，未改 SQLite schema v1。
+
+执行路径：`EvalCase JSONL → load_cases → setup_case → RuntimeEngine + Storage → judge_case → report.json/report.md`。判定实际状态/原因、工具执行序列、禁止工具、SQL 草案数量及事件；执行异常计失败，不通过过滤样本“修复”结果。HTTP 只接受内置 suite 与 mode=mock，任意 dataset 路径仅是可信本地 CLI 的输入。
+
+跨进程恢复案例运行两个固定 Runtime worker，并检查原待审上下文；pytest 继续运行真实 API 服务停启测试。恶意结果由本地合成工具实际返回，脚本故意提出写请求，后端政策负责阻断。Live 质量未运行。
+
+RunMetrics 从事件和步骤计算，Mock 合成 usage 只服务预算测试，单独标记，不计真实模型 tokens。缺失真实 usage/价格时输出 unknown。报告记录 dataset/fixture/runtime 摘要，比较要求前两者与 judge/mode 一致，允许源码版本变化；wall-clock 不构成性能对照实验。
+
+本机单用户边界未变：无分布式队列、多租户/OAuth、通用远程 MCP 安装、任意命令或真实采购。Compose 已提供但无 Docker 实测，CI 配置没有云端运行记录；当前证据与限制见 RESULTS/FEATURE_MATRIX。
+
+## 以下保留 Day 3 架构记录（2026-10-18）
 
 ```mermaid
 flowchart TD
